@@ -1,0 +1,22 @@
+<ion-view scroll="false">
+
+    <ion-slides slider="sliderDelegate" options="options">
+        <ion-slide-page ng-repeat="question in questions" class="padding">
+
+            <h1 class="title">{{question.text}}</h1>
+            <div class="list">
+                <label class="item item-input">
+                    <input type="text" ng-model="answers[$index]">
+                </label>
+            </div>
+            
+            <button class="button button-block button-outline button-balanced" 
+                    ng-click="submitAnswer($index)" 
+                    ng-disabled="answers[$index].length==0">
+                Next
+            </button>
+
+        </ion-slide-page>
+    </ion-slides>
+
+</ion-view>
