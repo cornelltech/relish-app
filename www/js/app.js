@@ -350,33 +350,34 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
 })
 
 .controller('PrimeController', function($scope, $state, $window, $timeout, StudyService){
-  $scope.width = $window.innerWidth;
-  console.log($scope.width);
-  $scope.isPriming = true;
-  $scope.condition;
-  
   var DELAY = 1000;
 
+  $scope.width = $window.innerWidth;
+  $scope.isPriming = true;
+  $scope.inRegion = false;
+  $scope.condition;
+  
   $scope.isDisabled = true;
   $timeout(function(){
     $scope.isDisabled = false;
   }, DELAY);
 
-  StudyService.loadStudies()
-    .then(function(study){
-      StudyService.getCondition(study.conditions)
-        .then(function(r){
-          console.log(r);
-          $scope.condition = r;
-        })
-        .catch(function(e){
-          console.log(e);
-        });
-    })
-    .catch(function(e){
-      console.log(e);
-    });
-
+  function syncStudy(){
+    StudyService.loadStudies()
+      .then(function(study){
+        StudyService.getCondition(study.conditions)
+          .then(function(r){
+            $scope.condition = r;
+          })
+          .catch(function(e){
+            console.log(e);
+          });
+      })
+      .catch(function(e){
+        console.log(e);
+      });
+  }
+  syncStudy();
 
   function showCoupon(){
     $scope.isPriming = false;
