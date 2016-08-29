@@ -349,12 +349,14 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
   $scope.submitAnswer = submitAnswer;
 })
 
-.controller('PrimeController', function($scope, $state, $window, $timeout, StudyService){
+.controller('PrimeController', function($scope, $state, $window, $timeout, StudyService, Geofence){
   var DELAY = 1000;
 
   $scope.width = 0.85 * $window.innerWidth;
   $scope.isPriming = true;
   $scope.inRegion = true;
+  
+  $scope.study;
   $scope.condition;
   
   $scope.isDisabled = true;
@@ -371,6 +373,11 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
   function syncStudy(){
     StudyService.loadStudies()
       .then(function(study){
+        console.log('==============');
+        console.log(study);
+        console.log('==============');
+
+        $scope.study = study;
         StudyService.getCondition(study.conditions)
           .then(function(r){
             $scope.condition = r;
@@ -394,6 +401,9 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
     $scope.inRegion = false;
   }
   $scope.reset = reset;
+
+
+
 
 })
 
