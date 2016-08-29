@@ -349,11 +349,17 @@ angular.module('relish', ['ionic', 'LocalStorageModule'])
   $scope.submitAnswer = submitAnswer;
 })
 
-.controller('PrimeController', function($scope, $state, StudyService){
+.controller('PrimeController', function($scope, $state, $timeout, StudyService){
   console.log("STATE");
 
   console.log("start");
   $scope.condition;
+  
+  $scope.isDisabled = true;
+  $timeout(function(){
+    $scope.isDisabled = false;
+  }, 5000);
+
 
   StudyService.loadStudies()
     .then(function(study){

@@ -8,8 +8,8 @@
             <div class="primer-img">
                 <img class="animated fadeIn" ng-src="{{condition.primer.image}}" />
             </div>
-            <div class="primer-text">
-                {{condition.primer.text}}
+            <div class="primer-text padding">
+                <p>{{condition.primer.description}}</p>
             </div>
         </div>
 
@@ -17,8 +17,8 @@
     </div>
     
     <div class="padding">
-        <button class="button button-block button-balanced">
-            button-positive
+        <button ng-disabled="isDisabled" class="button button-block button-balanced">
+            Claim coupon
         </button>
     </div>
 
