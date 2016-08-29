@@ -58,16 +58,26 @@ ion-slides{
   border-top:0px;
 }
 
+.button.button-block.button-balanced{
+  border-radius: 30px;
+  color: white;
+  background-color: #33cd5f;
+  box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.1);
+  font-size: xx-large;
+}
 
+.study-action{
+    position: absolute;
+    top: 50vh;
+    width:100%;
+}
 
-
-
+ion-view{
+  border-radius: 15px;
+}
 
 .study{
-  height: 88vh;
-}
-.study .study-title{
-  text-align: center;
+  height: 100vh;
 }
 .study .study-content .study-img{
   width: 100vw;
