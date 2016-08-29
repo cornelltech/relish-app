@@ -3,7 +3,7 @@
 // angular.module is a global place for creating, registering and retrieving Angular modules
 // 'starter' is the name of this angular module example (also set in a <body> attribute in index.html)
 // the 2nd parameter is an array of 'requires'
-angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
+angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospaced.qrcode'])
 
 
 
@@ -204,9 +204,6 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
   }
 
   function getCondition(conditions){
-    console.log("getCondition")
-    console.log(conditions)
-
     var deferred = $q.defer();
     var condition = undefined;
     var lastCondition = undefined;
@@ -214,9 +211,6 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
     // get the id of the last condition used
     var lastConditionId = localStorageService.get('lastCondition', -1);
 
-    console.log("lastConditionId")
-    console.log(lastConditionId)
-    
     // if nothing is used, get the first one
     if( lastConditionId == null ){
       lastCondition = conditions[0];
@@ -225,9 +219,6 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
         return obj.id == lastConditionId;
       });
     }
-
-    console.log("lastCondition")
-    console.log(lastCondition)
 
     // get the next condition in the list
     conditions.forEach(function(obj, indx){
@@ -239,9 +230,6 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
         }
       }
     });
-
-    console.log("condition")
-    console.log(condition)
 
     // cache
     localStorageService.set('lastCondition', condition.id);
@@ -349,8 +337,9 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
   $scope.submitAnswer = submitAnswer;
 })
 
-.controller('PrimeController', function($scope, $state, $window, $timeout, StudyService, Geofence){
+.controller('PrimeController', function($scope, $state, $q, $window, $timeout, $cordovaGeolocation, StudyService, Geofence){
   var DELAY = 1000;
+  var RADIUS = 1000;
 
   $scope.width = 0.85 * $window.innerWidth;
   $scope.isPriming = true;
@@ -373,14 +362,30 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
   function syncStudy(){
     StudyService.loadStudies()
       .then(function(study){
-        console.log('==============');
-        console.log(study);
-        console.log('==============');
-
         $scope.study = study;
-        StudyService.getCondition(study.conditions)
-          .then(function(r){
-            $scope.condition = r;
+        
+        // Get the current coords
+        getCoords()
+          .then(function(coords){
+            console.log(coords);
+            // figure out if we are in the region of interest
+            var dist = getDistance(coords.lat, coords.lng, $scope.study.region.lat, $scope.study.region.lng);
+
+            if(dist <= RADIUS){
+              // proceed if in region
+              $scope.inRegion = true;
+              StudyService.getCondition(study.conditions)
+                .then(function(r){
+                  $scope.condition = r;
+                })
+                .catch(function(e){
+                  console.log(e);
+                });
+            }else{
+              $scope.inRegion = false;
+              console.log("out of region");
+            }
+            
           })
           .catch(function(e){
             console.log(e);
@@ -403,7 +408,43 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
   $scope.reset = reset;
 
 
+  function getCoords(){
+    var deferred = $q.defer();
 
+    $cordovaGeolocation
+      .getCurrentPosition()
+      .then(function (position) {
+        deferred.resolve({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        });
+      }, function(e) {
+        // error
+        console.log(e);
+        deferred.reject(e);
+      });
+    
+    return deferred.promise;
+  }
+
+  function getDistance(lat1,lon1,lat2,lon2) {
+    var R = 6371; // Radius of the earth in km
+    var dLat = deg2rad(lat2-lat1);  // deg2rad below
+    var dLon = deg2rad(lon2-lon1); 
+    var a = 
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * 
+      Math.sin(dLon/2) * Math.sin(dLon/2)
+      ; 
+    var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+    var d = R * c * 1000; // Distance in m
+
+    return d;
+  }
+
+  function deg2rad(deg) {
+    return deg * (Math.PI/180)
+  }
 
 })
 
