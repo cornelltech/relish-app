@@ -338,7 +338,7 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
 })
 
 .controller('PrimeController', function($scope, $state, $q, $window, $timeout, $cordovaGeolocation, StudyService, Geofence){
-  var DELAY = 5000; //ms
+  var DELAY = 1000; //ms
   var RADIUS = 1000; //m
 
   $scope.width = 0.85 * $window.innerWidth;
@@ -354,6 +354,8 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
       $timeout(function(){
         $scope.isDisabled = false;
       }, DELAY);
+    }else{
+      $scope.isDisabled = true;
     }
   }
   checkActionBtnState();
@@ -377,6 +379,7 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
               StudyService.getCondition(study.conditions)
                 .then(function(r){
                   $scope.condition = r;
+                  checkActionBtnState();
                 })
                 .catch(function(e){
                   console.log(e);
@@ -384,6 +387,7 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
             }else{
               $scope.inRegion = false;
               console.log("out of region");
+              alert("Out of region");
             }
             
           })
@@ -404,7 +408,10 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
   $scope.showCoupon = showCoupon;
 
   function reset(){
+    console.log('click');
     $scope.inRegion = false;
+    $scope.isPriming = true;
+    checkActionBtnState();
   }
   $scope.reset = reset;
 

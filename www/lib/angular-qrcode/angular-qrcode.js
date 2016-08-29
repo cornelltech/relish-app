@@ -20,7 +20,7 @@ angular.module('monospaced.qrcode', [])
               var w = (Math.ceil((col + 1) * tile) - Math.floor(col * tile)),
                   h = (Math.ceil((row + 1) * tile) - Math.floor(row * tile));
 
-              context.fillStyle = qr.isDark(row, col) ? '#000' : '#06e385';
+              context.fillStyle = qr.isDark(row, col) ? '#000' : '#33cd5f';
               context.fillRect(Math.round(col * tile),
                                Math.round(row * tile), w, h);
             }

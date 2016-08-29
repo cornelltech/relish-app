@@ -76,15 +76,18 @@ ion-slides{
 }
 
 .study-action{
-    position: absolute;
-    top: 50vh;
-    width:100%;
-    padding-left: 25px;
-    padding-right: 25px;
+  position: absolute;
+  top: 51vh;
+  width:100%;
+  padding-left: 15%;
+  padding-right: 15%;
 }
-
+.study-text-content{
+  padding-left:12%; 
+  padding-right:12%;
+}
 ion-view{
-  border-radius: 15px;
+  
 }
 
 .study{
@@ -98,11 +101,13 @@ ion-view{
 
   font-size: 30px;
 	font-weight: 600;
+  line-height: 30px;
 	text-align: center;
 	color: rgba(0, 0, 0, 0.5);
 }
 .study .study-content .study-text{
   font-size: 16px;
+  line-height: 16px;
 	text-align: center;
 	color: rgba(0, 0, 0, 0.5);
 }
