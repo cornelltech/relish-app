@@ -352,15 +352,21 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
 .controller('PrimeController', function($scope, $state, $window, $timeout, StudyService){
   var DELAY = 1000;
 
-  $scope.width = $window.innerWidth;
+  $scope.width = 0.85 * $window.innerWidth;
   $scope.isPriming = true;
-  $scope.inRegion = false;
+  $scope.inRegion = true;
   $scope.condition;
   
   $scope.isDisabled = true;
-  $timeout(function(){
-    $scope.isDisabled = false;
-  }, DELAY);
+  function checkActionBtnState(){
+    if($scope.inRegion){
+      $timeout(function(){
+        $scope.isDisabled = false;
+      }, DELAY);
+    }
+  }
+  checkActionBtnState();
+  
 
   function syncStudy(){
     StudyService.loadStudies()
@@ -383,6 +389,11 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
     $scope.isPriming = false;
   }
   $scope.showCoupon = showCoupon;
+
+  function reset(){
+    $scope.inRegion = false;
+  }
+  $scope.reset = reset;
 
 })
 

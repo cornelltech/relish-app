@@ -69,7 +69,9 @@ ion-slides{
 	letter-spacing: 2.2px;
 	text-align: center;
 	color: #ffffff;
-
+}
+.button.disabled, .button[disabled]{
+  color:#33cd5f !important;
 }
 
 .study-action{
@@ -104,6 +106,7 @@ ion-view{
 .study .study-content .study-img{
   width: 100vw;
   height: 100vw;
+  background-color: #33cd5f;
 }
 .study .study-content .study-img img{
   width: 100vw;

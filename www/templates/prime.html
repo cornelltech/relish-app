@@ -1,12 +1,14 @@
 <ion-view>
 
-    <div class="prime-view" ng-show="isPriming">
+    <!--PRIMER-->
+    <div class="prime-view" ng-if="isPriming">
         
         <div class="study">
             <div class="study-content">
                 <!--Image-->
                 <div class="study-img">
-                    <img class="animated fadeIn" ng-src="{{condition.primer.image}}" />
+                    <img ng-if="!inRegion" class="animated fadeIn" src="https://media.giphy.com/media/3o6Zt422Mkju2mZlPq/giphy.gif" />
+                    <img ng-if="inRegion" class="animated fadeIn" ng-src="{{condition.primer.image}}" />
                 </div>
                 <!--Action Button-->
                 <div class="study-action padding">
@@ -30,12 +32,13 @@
 
     </div>
 
-    <div class="coupon-view" ng-show="!isPriming">
+    <!--COUPON-->
+    <div class="coupon-view" ng-if="!isPriming">
         
         <div class="study">
             <div class="study-content">
                 <!--Image-->
-                <div class="study-img">
+                <div class="study-img flex-center-container">
                     <qrcode class="animated fadeIn" data="{{condition.coupon.code}}" size="{{width}}"></qrcode>
                 </div>
 
@@ -51,8 +54,8 @@
 
                 <!--Action Button-->
                 <div class="flex-center-container study-action-close padding">
-                    <button ng-click="goBack()" 
-                            class="animated infinite bounceIn button button-large button-icon icon ion-close-circled">
+                    <button ng-click="reset()" 
+                            class="animated bounceIn button button-large button-icon icon ion-close-circled">
                     </button>
                 </div>
             </div>
