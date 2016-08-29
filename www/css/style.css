@@ -58,18 +58,27 @@ ion-slides{
   border-top:0px;
 }
 
-.primer{
+
+
+
+
+
+.study{
   height: 88vh;
 }
-.primer .primer-title{
+.study .study-title{
   text-align: center;
 }
-.primer .primer-content .primer-img{
+.study .study-content .study-img{
   width: 100vw;
   height: 100vw;
   background-color: #33cd5f;
 }
-.primer .primer-content .primer-img img{
+.study .study-content .study-img img{
   width: 100vw;
   height: 100vw;
+}
+.study .study-content .study-img qrcode canvas{
+  /*width: 100vw;
+  height: 100vw;*/
 }

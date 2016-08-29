@@ -1,15 +1,15 @@
 <ion-view>
     <div class="prime-view" ng-show="isPriming">
-        <div class="primer">
-            <div class="primer-title">
+        <div class="study">
+            <div class="study-title">
                 <h1>relish</h1>
             </div>
 
-            <div class="primer-content">
-                <div class="primer-img">
+            <div class="study-content">
+                <div class="study-img">
                     <img class="animated fadeIn" ng-src="{{condition.primer.image}}" />
                 </div>
-                <div class="primer-text padding">
+                <div class="study-text padding">
                     <p>{{condition.primer.description}}</p>
                 </div>
             </div>
@@ -24,10 +24,31 @@
                 Claim coupon
             </button>
         </div>
+
     </div>
 
     <div class="coupon-view" ng-show="!isPriming">
-        <p>Here is a coupon</p>
+        <div class="study">
+            <div class="study-title">
+                <h1>Your coupon!</h1>
+            </div>
+
+            <div class="study-content">
+                <div class="study-img flex-center-container">
+                    <qrcode class="animated fadeIn" data="{{condition.coupon.code}}" size="{{width}}"></qrcode>
+                </div>
+                <div class="study-text padding flex-center-container">
+                    <p class="animated infinite bounceIn" style="text-align:center;">{{condition.coupon.description}}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="padding">
+            <button class="button button-block button-balanced">
+                Home
+            </button>
+        </div>
+
     </div>
 
 </ion-view>

@@ -3,7 +3,7 @@
 // angular.module is a global place for creating, registering and retrieving Angular modules
 // 'starter' is the name of this angular module example (also set in a <body> attribute in index.html)
 // the 2nd parameter is an array of 'requires'
-angular.module('relish', ['ionic', 'LocalStorageModule'])
+angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
 
 
 
@@ -349,14 +349,18 @@ angular.module('relish', ['ionic', 'LocalStorageModule'])
   $scope.submitAnswer = submitAnswer;
 })
 
-.controller('PrimeController', function($scope, $state, $timeout, StudyService){
+.controller('PrimeController', function($scope, $state, $window, $timeout, StudyService){
+  $scope.width = 0.8 * $window.innerWidth;
+  console.log($scope.width);
   $scope.isPriming = true;
   $scope.condition;
   
+  var DELAY = 1000;
+
   $scope.isDisabled = true;
   $timeout(function(){
     $scope.isDisabled = false;
-  }, 5000);
+  }, DELAY);
 
   StudyService.loadStudies()
     .then(function(study){
