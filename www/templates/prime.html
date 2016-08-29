@@ -1,25 +1,33 @@
 <ion-view>
-    <div class="primer">
-        <div class="primer-title">
-            <h1>relish</h1>
-        </div>
-
-        <div class="primer-content">
-            <div class="primer-img">
-                <img class="animated fadeIn" ng-src="{{condition.primer.image}}" />
+    <div class="prime-view" ng-show="isPriming">
+        <div class="primer">
+            <div class="primer-title">
+                <h1>relish</h1>
             </div>
-            <div class="primer-text padding">
-                <p>{{condition.primer.description}}</p>
-            </div>
-        </div>
 
+            <div class="primer-content">
+                <div class="primer-img">
+                    <img class="animated fadeIn" ng-src="{{condition.primer.image}}" />
+                </div>
+                <div class="primer-text padding">
+                    <p>{{condition.primer.description}}</p>
+                </div>
+            </div>
+
+            
+        </div>
         
+        <div class="padding">
+            <button ng-disabled="isDisabled" 
+                    ng-click="showCoupon()" 
+                    class="button button-block button-balanced">
+                Claim coupon
+            </button>
+        </div>
     </div>
-    
-    <div class="padding">
-        <button ng-disabled="isDisabled" class="button button-block button-balanced">
-            Claim coupon
-        </button>
+
+    <div class="coupon-view" ng-show="!isPriming">
+        <p>Here is a coupon</p>
     </div>
 
 </ion-view>

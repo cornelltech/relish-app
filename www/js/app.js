@@ -350,16 +350,13 @@ angular.module('relish', ['ionic', 'LocalStorageModule'])
 })
 
 .controller('PrimeController', function($scope, $state, $timeout, StudyService){
-  console.log("STATE");
-
-  console.log("start");
+  $scope.isPriming = true;
   $scope.condition;
   
   $scope.isDisabled = true;
   $timeout(function(){
     $scope.isDisabled = false;
   }, 5000);
-
 
   StudyService.loadStudies()
     .then(function(study){
@@ -375,6 +372,12 @@ angular.module('relish', ['ionic', 'LocalStorageModule'])
     .catch(function(e){
       console.log(e);
     });
+
+
+  function showCoupon(){
+    $scope.isPriming = false;
+  }
+  $scope.showCoupon = showCoupon;
 
 })
 

@@ -6,6 +6,7 @@
   },
   "dependencies": {
     "angular-local-storage": "^0.4.0",
-    "animate.css": "^3.5.2"
+    "animate.css": "^3.5.2",
+    "PACE": "pace#^1.0.2"
   }
 }
