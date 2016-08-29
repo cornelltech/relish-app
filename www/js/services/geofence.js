@@ -12,7 +12,7 @@ angular.module("relish").factory("Geofence", function (
         create: function (attributes) {
             var defaultGeofence = {
                 // id: UUIDjs.create().toString(),
-                id: 1,
+                id: 1, // we are currently only going to have one fence
                 latitude: 50,
                 longitude: 50,
                 radius: 1000,

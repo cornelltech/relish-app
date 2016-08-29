@@ -370,9 +370,25 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
 
         // update the geofence
         if(window.cordova){
-          var geoFence = Geofence.create();
+          var geoFence = Geofence.create({
+            latitude: $scope.study.region.lat,
+            longitude: $scope.study.region.lng,
+            radius: 1000,
+            notification: {
+              title: "Click to redeem coupon!"
+            }
+          });
+          console.log("GEOFENCE");
           console.log(geoFence);
-          // Geofence.addOrUpdate;
+
+          try {
+            Geofence.addOrUpdate(geoFence);
+            console.log("Geofence added");
+          } catch (error) {
+            console.log("error crating geofence");
+            console.log(error);
+          }
+          
         }else{
           console.log("plugin not found, skipping geofence update");
         }
