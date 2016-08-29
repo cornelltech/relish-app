@@ -338,8 +338,8 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
 })
 
 .controller('PrimeController', function($scope, $state, $q, $window, $timeout, $cordovaGeolocation, StudyService, Geofence){
-  var DELAY = 1000;
-  var RADIUS = 1000;
+  var DELAY = 5000; //ms
+  var RADIUS = 1000; //m
 
   $scope.width = 0.85 * $window.innerWidth;
   $scope.isPriming = true;
@@ -393,6 +393,7 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
       })
       .catch(function(e){
         console.log(e);
+        alert("Failed to sync study");
       });
   }
   syncStudy();

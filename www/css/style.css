@@ -71,13 +71,16 @@ ion-slides{
 	color: #ffffff;
 }
 .button.disabled, .button[disabled]{
-  color:#33cd5f !important;
+  background-color: #f7f7f7 !important;
+  color: #bfbfbf !important;
 }
 
 .study-action{
     position: absolute;
     top: 50vh;
     width:100%;
+    padding-left: 25px;
+    padding-right: 25px;
 }
 
 ion-view{
