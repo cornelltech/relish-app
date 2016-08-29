@@ -7,7 +7,9 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
 
 
 
-.constant('DOMAIN', 'https://e3b157ca.ngrok.io/api/v1')
+// .constant('DOMAIN', 'https://e3b157ca.ngrok.io/api/v1')
+.constant('DOMAIN', 'http://ec2-54-152-205-200.compute-1.amazonaws.com/api/v1')
+
 
 
 
@@ -365,6 +367,18 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
     StudyService.loadStudies()
       .then(function(study){
         $scope.study = study;
+
+        // update the geofence
+        if(window.cordova){
+          var geoFence = Geofence.create();
+          console.log(geoFence);
+          // Geofence.addOrUpdate;
+        }else{
+          console.log("plugin not found, skipping geofence update");
+        }
+        
+
+        
         
         // Get the current coords
         getCoords()
