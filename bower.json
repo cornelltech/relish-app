@@ -8,6 +8,7 @@
     "angular-local-storage": "^0.4.0",
     "animate.css": "^3.5.2",
     "PACE": "pace#^1.0.2",
-    "angular-qrcode": "monospaced/angular-qrcode#^6.2.1"
+    "angular-qrcode": "monospaced/angular-qrcode#^6.2.1",
+    "Ionicons": "ionicons#^2.0.1"
   }
 }

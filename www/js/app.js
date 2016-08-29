@@ -350,7 +350,7 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
 })
 
 .controller('PrimeController', function($scope, $state, $window, $timeout, StudyService){
-  $scope.width = 0.8 * $window.innerWidth;
+  $scope.width = $window.innerWidth;
   console.log($scope.width);
   $scope.isPriming = true;
   $scope.condition;

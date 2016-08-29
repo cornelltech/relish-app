@@ -1,44 +1,63 @@
 <ion-view>
     
     <div class="prime-view" ng-show="isPriming">
+        
         <div class="study">
             <div class="study-content">
+                <!--Image-->
                 <div class="study-img">
                     <img class="animated fadeIn" ng-src="{{condition.primer.image}}" />
                 </div>
-                <div class="study-text padding">
-                    <p>{{condition.primer.description}}</p>
+                <!--Action Button-->
+                <div class="study-action padding">
+                    <button ng-disabled="isDisabled" 
+                            ng-click="showCoupon()" 
+                            class="button button-block button-balanced animated bounceIn">
+                        RELISH IT
+                    </button>
+                </div>
+                <!--Text-->
+                <div class="animated fadeIn">
+                    <div class="study-title padding">
+                        <p>{{condition.primer.title}}</p>
+                    </div>
+                    <div class="study-text padding">
+                        <p>{{condition.primer.description}}</p>
+                    </div>
                 </div>
             </div>
-
-            <div class="study-action padding">
-                <button ng-disabled="isDisabled" 
-                        ng-click="showCoupon()" 
-                        class="button button-block button-balanced animated bounceIn">
-                    relish it.
-                </button>
-            </div>
-            
         </div>
+
     </div>
 
     <div class="coupon-view" ng-show="!isPriming">
+        
         <div class="study">
             <div class="study-content">
-                <div class="study-img flex-center-container">
+                <!--Image-->
+                <div class="study-img">
                     <qrcode class="animated fadeIn" data="{{condition.coupon.code}}" size="{{width}}"></qrcode>
                 </div>
-                <div class="study-text padding flex-center-container">
-                    <p class="animated infinite bounceIn" style="text-align:center;">{{condition.coupon.description}}</p>
+
+                <!--Text-->
+                <div class="animated fadeIn">
+                    <div class="study-title padding">
+                        <p>{{condition.coupon.title}}</p>
+                    </div>
+                    <div class="study-text padding">
+                        <p>{{condition.coupon.description}}</p>
+                    </div>
+                </div>
+
+                <!--Action Button-->
+                <div class="flex-center-container study-action-close padding">
+                    <button ng-click="goBack()" 
+                            class="animated infinite bounceIn button button-large button-icon icon ion-close-circled">
+                    </button>
                 </div>
             </div>
         </div>
 
-        <div class="padding">
-            <button class="button button-block button-balanced">
-                Home
-            </button>
-        </div>
-
     </div>
+
 </ion-view>
