@@ -1,14 +1,14 @@
 <ion-view>
 
     <!--PRIMER-->
-    <div class="prime-view" ng-if="isPriming">
+    <div class="prime-view" ng-show="isPriming">
         
         <div class="study">
             <div class="study-content">
                 <!--Image-->
                 <div class="study-img">
-                    <img ng-if="!inRegion" class="animated fadeIn" src="https://media.giphy.com/media/3o6Zt422Mkju2mZlPq/giphy.gif" />
-                    <img ng-if="inRegion" class="animated fadeIn" ng-src="{{condition.primer.image}}" />
+                    <img ng-show="!inRegion" src="https://media.giphy.com/media/3o6Zt422Mkju2mZlPq/giphy.gif" />
+                    <img ng-show="inRegion" ng-src="{{condition.primer.image}}" />
                 </div>
                 <!--Action Button-->
                 <div class="study-action padding">
@@ -21,10 +21,12 @@
                 <!--Text-->
                 <div class="animated fadeIn">
                     <div class="study-title padding">
-                        <p>{{condition.primer.title}}</p>
+                        <p ng-show="!inRegion">Nothing to Relish</p>
+                        <p ng-show="inRegion">{{condition.primer.title}}</p>
                     </div>
                     <div class="study-text padding">
-                        <p>{{condition.primer.description}}</p>
+                        <p ng-show="!inRegion">You are currently not within proximity of any participating venues</p>
+                        <p ng-show="inRegion">{{condition.primer.description}}</p>
                     </div>
                 </div>
             </div>
@@ -33,7 +35,7 @@
     </div>
 
     <!--COUPON-->
-    <div class="coupon-view" ng-if="!isPriming">
+    <div class="coupon-view" ng-show="!isPriming">
         
         <div class="study">
             <div class="study-content">

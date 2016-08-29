@@ -343,7 +343,7 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
 
   $scope.width = 0.85 * $window.innerWidth;
   $scope.isPriming = true;
-  $scope.inRegion = true;
+  $scope.inRegion = false;
   
   $scope.study;
   $scope.condition;
