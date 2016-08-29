@@ -1,5 +1,25 @@
-<ion-view class="padding">
-    <div class="flex-center-container">
-        <h1>Prime</h1>
+<ion-view>
+    <div class="primer">
+        <div class="primer-title">
+            <h1>relish</h1>
+        </div>
+
+        <div class="primer-content">
+            <div class="primer-img">
+                <img class="animated fadeIn" ng-src="{{condition.primer.image}}" />
+            </div>
+            <div class="primer-text">
+                {{condition.primer.text}}
+            </div>
+        </div>
+
+        
     </div>
+    
+    <div class="padding">
+        <button class="button button-block button-balanced">
+            button-positive
+        </button>
+    </div>
+
 </ion-view>

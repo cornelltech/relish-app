@@ -57,3 +57,19 @@ ion-slides{
   border-right:0px;
   border-top:0px;
 }
+
+.primer{
+  height: 88vh;
+}
+.primer .primer-title{
+  text-align: center;
+}
+.primer .primer-content .primer-img{
+  width: 100vw;
+  height: 100vw;
+  background-color:red;
+}
+.primer .primer-content .primer-img img{
+  width: 100vw;
+  height: 100vw;
+}

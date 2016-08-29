@@ -7,7 +7,7 @@ angular.module('relish', ['ionic', 'LocalStorageModule'])
 
 
 
-.constant('DOMAIN', 'http://012e5ceb.ngrok.io/api/v1')
+.constant('DOMAIN', 'https://e3b157ca.ngrok.io/api/v1')
 
 
 
@@ -179,6 +179,83 @@ angular.module('relish', ['ionic', 'LocalStorageModule'])
   }
 })
 
+.service('StudyService', function($q, $http, localStorageService, ParticipantService, DOMAIN){
+  
+  function loadStudies(){
+    var deferred = $q.defer();
+    var token = ParticipantService.getToken();
+
+    $http({
+      url: DOMAIN + '/studies',
+      method: 'GET',
+      headers: { 'Authorization': 'Token ' + token }
+    }).then(function(r){
+      r.data.results.forEach(function(obj){
+        if(obj.active){
+          deferred.resolve(obj);
+        }
+      });
+      // deferred.reject( );
+    }).catch(function(e){
+      deferred.reject(e);
+    });
+
+    return deferred.promise;
+  }
+
+  function getCondition(conditions){
+    console.log("getCondition")
+    console.log(conditions)
+
+    var deferred = $q.defer();
+    var condition = undefined;
+    var lastCondition = undefined;
+    
+    // get the id of the last condition used
+    var lastConditionId = localStorageService.get('lastCondition', -1);
+
+    console.log("lastConditionId")
+    console.log(lastConditionId)
+    
+    // if nothing is used, get the first one
+    if( lastConditionId == null ){
+      lastCondition = conditions[0];
+    }else {
+      lastCondition = conditions.find(function(obj, indx){
+        return obj.id == lastConditionId;
+      });
+    }
+
+    console.log("lastCondition")
+    console.log(lastCondition)
+
+    // get the next condition in the list
+    conditions.forEach(function(obj, indx){
+      if(lastCondition.id == obj.id){
+        if(indx == conditions.length - 1){
+          condition = conditions[0];
+        }else{
+          condition = conditions[indx + 1];
+        }
+      }
+    });
+
+    console.log("condition")
+    console.log(condition)
+
+    // cache
+    localStorageService.set('lastCondition', condition.id);
+
+    deferred.resolve(condition);
+
+    return deferred.promise;
+  }
+
+  return {
+    loadStudies: loadStudies,
+    getCondition: getCondition
+  }
+})
 
 
 .controller('RegisterController', function($scope, $state, ParticipantService){
@@ -272,8 +349,27 @@ angular.module('relish', ['ionic', 'LocalStorageModule'])
   $scope.submitAnswer = submitAnswer;
 })
 
-.controller('PrimeController', function($scope, $state){
+.controller('PrimeController', function($scope, $state, StudyService){
   console.log("STATE");
+
+  console.log("start");
+  $scope.condition;
+
+  StudyService.loadStudies()
+    .then(function(study){
+      StudyService.getCondition(study.conditions)
+        .then(function(r){
+          console.log(r);
+          $scope.condition = r;
+        })
+        .catch(function(e){
+          console.log(e);
+        });
+    })
+    .catch(function(e){
+      console.log(e);
+    });
+
 })
 
 .controller('SettingsController', function($scope){})
