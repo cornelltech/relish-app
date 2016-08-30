@@ -32,15 +32,18 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
 
   // check if the user is authenticated
   $rootScope.$on('$locationChangeSuccess', function(evt) {
+     console.log("Checking for authentication token");
      // Halt state change from even starting
      evt.preventDefault();
      // Verify the user has a session token
      var sessionToken = ParticipantService.getToken();
      // Continue with the update and state transition if logic allows
      if(sessionToken){
-        $urlRouter.sync();
+       console.log("Token found, continue");
+       $urlRouter.sync();
      }else{
-        $state.go('register');
+       console.log("Token not found, go to register");
+       $state.go('register');
      }
    });
 
@@ -343,6 +346,10 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
 })
 
 .controller('PrimeController', function($scope, $state, $q, $window, $timeout, $ionicPlatform, StudyService, Geolocation, Geofence){
+  console.log('=============================================');
+  console.log('PrimeController');
+
+
   var DELAY = 1000; //ms
   var RADIUS = 1000; //m
 
@@ -371,7 +378,6 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
       $scope.isDisabled = true;
     }
   }
-  checkActionBtnState();
 
   function showCoupon(){
     $scope.isPriming = false;
@@ -449,8 +455,8 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
             console.log("GEOFENCE");
             console.log(geoFence);
 
-            // Geofence.addOrUpdate(geoFence);
-            // console.log("Geofence added");
+            Geofence.addOrUpdate(geoFence);
+            console.log("Geofence added");
           }else{
             console.log("plugin not found, skipping geofence update");
           }
@@ -501,6 +507,7 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
     // handle event
     console.log("ENTER");
     sync();
+    checkActionBtnState();
   });
 
 })
