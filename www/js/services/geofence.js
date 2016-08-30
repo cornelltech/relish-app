@@ -3,13 +3,17 @@ angular.module("relish").factory("Geofence", function (
     $window,
     $q,
     $log,
-    $ionicLoading
+    $ionicLoading,
+    localStorageService
 ) {
     var geofenceService = {
         _geofences: [],
         _geofencesPromise: null,
 
         create: function (attributes) {
+            console.log("Creating a geofence");
+            console.log(attributes);
+
             var defaultGeofence = {
                 // id: UUIDjs.create().toString(),
                 id: 1, // we are currently only going to have one fence
@@ -30,7 +34,7 @@ angular.module("relish").factory("Geofence", function (
         },
 
         loadFromLocalStorage: function () {
-            var result = localStorage["geofences"];
+            var result = localStorageService.get("geofences");
             var geofences = [];
 
             if (result) {
@@ -46,7 +50,7 @@ angular.module("relish").factory("Geofence", function (
         },
 
         saveToLocalStorage: function () {
-            localStorage["geofences"] = angular.toJson(this._geofences);
+            localStorageService.get("geofences") = angular.toJson(this._geofences);
         },
 
         loadFromDevice: function () {
@@ -80,6 +84,10 @@ angular.module("relish").factory("Geofence", function (
         },
 
         addOrUpdate: function (geofence) {
+
+            console.log("Adding a geofence");
+            console.log(geofence);
+
             var self = this;
 
             return $window.geofence.addOrUpdate(geofence).then(function () {

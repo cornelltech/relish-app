@@ -3,7 +3,7 @@
 // angular.module is a global place for creating, registering and retrieving Angular modules
 // 'starter' is the name of this angular module example (also set in a <body> attribute in index.html)
 // the 2nd parameter is an array of 'requires'
-angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospaced.qrcode'])
+angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
 
 
 
@@ -277,27 +277,30 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
   $scope.goToPermissions = goToPermissions;
 })
 
-.controller('PermissionsController', function($scope, $state){
+.controller('PermissionsController', function($scope, $state, $ionicPlatform){
   function requestPermissions(){
-    if(window.cordova && window.geofence){
-      window.geofence.initialize().then(function () {
-        console.log("Successful initialization");
+    $ionicPlatform.ready(function(){
+      if(window.cordova && window.geofence){
+        window.geofence.initialize().then(function () {
+          console.log("Successful initialization");
+          $state.go('questions');
+        }, function (error) {
+          console.log(error);
+          alert("Failed to initialize plugin");
+          $state.go('questions');
+        });
+      }else{
+        console.log("Plugin not found");
+        alert("Plugin not found");
         $state.go('questions');
-      }, function (error) {
-        console.log(error);
-        alert("Failed to initialize plugin");
-        $state.go('questions');
-      });
-    }else{
-      console.log("Plugin not found");
-      alert("Plugin not found");
-      $state.go('questions');
-    }
+      }
+    });
+    
   }
   $scope.requestPermissions = requestPermissions;
 })
 
-.controller('QuestionsController', function($scope, $state, QuestionService){
+.controller('QuestionsController', function($scope, $state,  QuestionService){
   $scope.questions = [];
   $scope.answers = [];
   $scope.sliderDelegate = null;
@@ -339,7 +342,7 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
   $scope.submitAnswer = submitAnswer;
 })
 
-.controller('PrimeController', function($scope, $state, $q, $window, $timeout, $cordovaGeolocation, StudyService, Geofence){
+.controller('PrimeController', function($scope, $state, $q, $window, $timeout, $ionicPlatform, StudyService, Geolocation, Geofence){
   var DELAY = 1000; //ms
   var RADIUS = 1000; //m
 
@@ -366,48 +369,47 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
   function syncStudy(){
     StudyService.loadStudies()
       .then(function(study){
+        console.log("Got the study");
         $scope.study = study;
-
+        
         // update the geofence
-        if(window.cordova){
-          var geoFence = Geofence.create({
-            latitude: $scope.study.region.lat,
-            longitude: $scope.study.region.lng,
-            radius: 1000,
-            notification: {
-              title: "Click to redeem coupon!"
-            }
-          });
-          console.log("GEOFENCE");
-          console.log(geoFence);
+        console.log("starting geofence update");
+        $ionicPlatform.ready(function(){
+          if($window.cordova && $window.geofence){
+            console.log("fond plugin");
+            var geoFence = Geofence.create({
+              latitude: $scope.study.region.lat,
+              longitude: $scope.study.region.lng,
+              radius: 1000,
+              notification: {
+                title: "Click to redeem coupon!"
+              }
+            });
+            console.log("GEOFENCE");
+            console.log(geoFence);
 
-          try {
-            Geofence.addOrUpdate(geoFence);
-            console.log("Geofence added");
-          } catch (error) {
-            console.log("error crating geofence");
-            console.log(error);
+            // Geofence.addOrUpdate(geoFence);
+            // console.log("Geofence added");
+          }else{
+            console.log("plugin not found, skipping geofence update");
           }
-          
-        }else{
-          console.log("plugin not found, skipping geofence update");
-        }
-        
-
-        
+        });
         
         // Get the current coords
         getCoords()
           .then(function(coords){
+            console.log("Got the coords");
             console.log(coords);
             // figure out if we are in the region of interest
             var dist = getDistance(coords.lat, coords.lng, $scope.study.region.lat, $scope.study.region.lng);
 
             if(dist <= RADIUS){
+              console.log("In the region");
               // proceed if in region
               $scope.inRegion = true;
               StudyService.getCondition(study.conditions)
                 .then(function(r){
+                  console.log("Got the condition");
                   $scope.condition = r;
                   checkActionBtnState();
                 })
@@ -448,19 +450,20 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
 
   function getCoords(){
     var deferred = $q.defer();
-
-    $cordovaGeolocation
-      .getCurrentPosition()
-      .then(function (position) {
-        deferred.resolve({
-          lat: position.coords.latitude,
-          lng: position.coords.longitude
+    $ionicPlatform.ready(function(){
+      Geolocation.getCurrentPosition()
+        .then(function(position){
+          deferred.resolve({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          });
+        }, function(e) {
+          // error
+          console.log(e);
+          // deferred.reject(e);
+          deferred.resolve({"lat":40.740999620828084,"lng":-74.00181926300179})
         });
-      }, function(e) {
-        // error
-        console.log(e);
-        deferred.reject(e);
-      });
+    });
     
     return deferred.promise;
   }
@@ -469,11 +472,9 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
     var R = 6371; // Radius of the earth in km
     var dLat = deg2rad(lat2-lat1);  // deg2rad below
     var dLon = deg2rad(lon2-lon1); 
-    var a = 
-      Math.sin(dLat/2) * Math.sin(dLat/2) +
-      Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * 
-      Math.sin(dLon/2) * Math.sin(dLon/2)
-      ; 
+    var a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * 
+            Math.sin(dLon/2) * Math.sin(dLon/2);
     var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
     var d = R * c * 1000; // Distance in m
 
