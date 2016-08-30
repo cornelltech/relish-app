@@ -352,6 +352,14 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
   
   $scope.study;
   $scope.condition;
+
+  // DEBUG VALUES
+  $scope.DEBUG = true;
+  $scope.currentCoords = {lat:0, lng:0};
+  $scope.regionCoords = {lat:0, lng:0};
+  $scope.dist = 0;
+  $scope.radius = RADIUS;
+
   
   $scope.isDisabled = true;
   function checkActionBtnState(){
@@ -422,6 +430,8 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
       .then(function(study){
         console.log("Got the study");
         $scope.study = study;
+
+        $scope.regionCoords = {lat: study.region.lat, lng: study.region.lng};
         
         // update the geofence
         console.log("starting geofence update");
@@ -451,8 +461,11 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
           .then(function(coords){
             console.log("Got the coords");
             console.log(coords);
+            $scope.currentCoords = {lat: coords.lat, lng: coords.lng};
+
             // figure out if we are in the region of interest
             var dist = getDistance(coords.lat, coords.lng, $scope.study.region.lat, $scope.study.region.lng);
+            $scope.dist = dist;
 
             if(dist <= RADIUS){
               console.log("In the region");
@@ -470,7 +483,6 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
             }else{
               $scope.inRegion = false;
               console.log("out of region");
-              alert("Out of region");
             }
             
           })
