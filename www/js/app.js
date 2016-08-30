@@ -277,21 +277,21 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
   $scope.goToPermissions = goToPermissions;
 })
 
-.controller('PermissionsController', function($scope, $state, $ionicPlatform){
+.controller('PermissionsController', function($scope, $state, $window, $ionicPlatform){
   function requestPermissions(){
     $ionicPlatform.ready(function(){
-      if(window.cordova && window.geofence){
-        window.geofence.initialize().then(function () {
+      if($window.cordova && $window.geofence){
+        $window.geofence.initialize().then(function () {
           console.log("Successful initialization");
           $state.go('questions');
         }, function (error) {
           console.log(error);
-          alert("Failed to initialize plugin");
           $state.go('questions');
         });
       }else{
         console.log("Plugin not found");
         alert("Plugin not found");
+
         $state.go('questions');
       }
     });
