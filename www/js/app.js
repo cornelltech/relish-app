@@ -480,11 +480,11 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
           console.log("In the region");
           // proceed if in region
           $scope.inRegion = true;
-          checkActionBtnState();
         }else{
           $scope.inRegion = false;
           console.log("out of region");
         }
+        checkActionBtnState();
         
       })
       .catch(function(e){
