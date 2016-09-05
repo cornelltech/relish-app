@@ -11,18 +11,17 @@ angular.module("relish").factory("Geofence", function (
         _geofencesPromise: null,
 
         create: function (attributes) {
-            console.log("Creating a geofence");
-            console.log(attributes);
+            console.log("geofenceService.create");
 
             var defaultGeofence = {
                 // id: UUIDjs.create().toString(),
-                id: 1, // we are currently only going to have one fence
+                id: "1",
                 latitude: 50,
                 longitude: 50,
                 radius: 1000,
                 transitionType: TransitionType.ENTER,
                 notification: {
-                    id: this.getNextNotificationId(),
+                    id: 1,
                     title: "Ionic geofence example",
                     text: "",
                     icon: "res://ic_menu_mylocation",
@@ -85,7 +84,7 @@ angular.module("relish").factory("Geofence", function (
 
         addOrUpdate: function (geofence) {
 
-            console.log("Adding a geofence");
+            console.log("geofenceService.addOrUpdate");
             console.log(geofence);
 
             var self = this;

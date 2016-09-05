@@ -13,9 +13,9 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
 
 
 
-.run(function($rootScope, $ionicPlatform, $urlRouter, $state, ParticipantService) {
+.run(function($rootScope, $window, $ionicLoading, $ionicPlatform, $urlRouter, $state, ParticipantService) {
   $ionicPlatform.ready(function() {
-    if(window.cordova && window.cordova.plugins.Keyboard) {
+    if($window.cordova && $window.cordova.plugins.Keyboard) {
       // Hide the accessory bar by default (remove this to show the accessory bar above the keyboard
       // for form inputs)
       cordova.plugins.Keyboard.hideKeyboardAccessoryBar(true);
@@ -25,9 +25,41 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
       // a much nicer keyboard experience.
       cordova.plugins.Keyboard.disableScroll(true);
     }
-    if(window.StatusBar) {
+    if($window.StatusBar) {
       StatusBar.styleDefault();
     }
+
+    // geofence stuff
+    if($window.cordova && $window.geofence) {
+
+      // on transition 
+      $window.geofence.onTransitionReceived = function(geofences){
+        console.log("geofence.onTransitionReceived");
+        geofences.forEach(function (geo) {
+          console.log('Geofence transition detected', JSON.stringify(geo));
+          if($window.cordova && $window.cordova.plugins.notification.local){
+            $window.cordova.plugins.notification.local.schedule({
+              id: geo.notification.id,
+              title: geo.notification.title,
+              text: geo.notification.text,
+            });
+          }else{
+            console.log("missing local notification plugin");
+          }
+        });
+      }
+
+      // on notification click
+      $window.geofence.onNotificationClicked = function (notificationData) {
+          console.log("geofence.onNotificationClicked")
+          console.log(notificationData);
+      };
+
+      $window.geofence.initialize(function () {
+          console.log("Geofence plugin initialized");
+      });
+    }
+
   });
 
   // check if the user is authenticated
@@ -46,6 +78,7 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
        $state.go('register');
      }
    });
+
 
 })
 
@@ -351,7 +384,7 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
 
 
   var DELAY = 1000; //ms
-  var RADIUS = 1000; //m
+  var RADIUS = 50; //m
 
   $scope.width = 0.85 * $window.innerWidth;
   $scope.isPriming = true;
@@ -440,23 +473,20 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
         $scope.regionCoords = {lat: study.region.lat, lng: study.region.lng};
         
         // update the geofence
-        console.log("starting geofence update");
         $ionicPlatform.ready(function(){
           if($window.cordova && $window.geofence){
-            console.log("fond plugin");
             var geoFence = Geofence.create({
               latitude: $scope.study.region.lat,
               longitude: $scope.study.region.lng,
-              radius: 1000,
+              radius: RADIUS,
               notification: {
-                title: "Click to redeem coupon!"
+                id: "1",
+                title: "Click to redeem coupon!",
+                text: "",
+                openAppOnClick: true
               }
             });
-            console.log("GEOFENCE");
-            console.log(geoFence);
-
             Geofence.addOrUpdate(geoFence);
-            console.log("Geofence added");
           }else{
             console.log("plugin not found, skipping geofence update");
           }
