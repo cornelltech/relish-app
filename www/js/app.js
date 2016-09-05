@@ -463,6 +463,43 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
     return deg * (Math.PI/180)
   }
 
+  function monitorPosition(){
+    console.log("monitorPosition()")
+    // Get the current coords
+    getCoords()
+      .then(function(coords){
+        console.log("Got the coords");
+        console.log(coords);
+        $scope.currentCoords = {lat: coords.lat, lng: coords.lng};
+
+        // figure out if we are in the region of interest
+        var dist = getDistance(coords.lat, coords.lng, $scope.study.region.lat, $scope.study.region.lng);
+        $scope.dist = dist;
+
+        if(dist <= RADIUS){
+          console.log("In the region");
+          // proceed if in region
+          $scope.inRegion = true;
+          checkActionBtnState();
+        }else{
+          $scope.inRegion = false;
+          console.log("out of region");
+        }
+        
+      })
+      .catch(function(e){
+        console.log(e);
+      });
+  }
+
+  function poll(){
+    $timeout(function(){
+      console.log("timeout");
+      monitorPosition();
+      poll();
+    }, 1000);
+  }
+
 
   function sync(){
     StudyService.loadStudies()
@@ -491,40 +528,18 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
             console.log("plugin not found, skipping geofence update");
           }
         });
-        
-        // Get the current coords
-        getCoords()
-          .then(function(coords){
-            console.log("Got the coords");
-            console.log(coords);
-            $scope.currentCoords = {lat: coords.lat, lng: coords.lng};
-
-            // figure out if we are in the region of interest
-            var dist = getDistance(coords.lat, coords.lng, $scope.study.region.lat, $scope.study.region.lng);
-            $scope.dist = dist;
-
-            if(dist <= RADIUS){
-              console.log("In the region");
-              // proceed if in region
-              $scope.inRegion = true;
-              StudyService.getCondition(study.conditions)
-                .then(function(r){
-                  console.log("Got the condition");
-                  $scope.condition = r;
-                  checkActionBtnState();
-                })
-                .catch(function(e){
-                  console.log(e);
-                });
-            }else{
-              $scope.inRegion = false;
-              console.log("out of region");
-            }
+        StudyService.getCondition($scope.study.conditions)
+          .then(function(r){
+            console.log("Got the condition");
+            $scope.condition = r;
             
+            poll();
+
           })
           .catch(function(e){
             console.log(e);
           });
+        
       })
       .catch(function(e){
         console.log(e);
@@ -533,9 +548,11 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
   }
 
 
-  $scope.$on("$ionicView.beforeEnter", function(event, data){
+  $scope.$on("$ionicView.enter", function(event, data){
     // handle event
+    console.log('======================================')
     console.log("ENTER");
+    console.log('======================================')
     sync();
     checkActionBtnState();
   });
