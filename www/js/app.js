@@ -476,7 +476,7 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
         var dist = getDistance(coords.lat, coords.lng, $scope.study.region.lat, $scope.study.region.lng);
         $scope.dist = dist;
 
-        if(dist <= RADIUS){
+        if(dist <= 1.75*RADIUS){
           console.log("In the region");
           // proceed if in region
           $scope.inRegion = true;
