@@ -55,9 +55,9 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
           console.log(notificationData);
       };
 
-      $window.geofence.initialize(function () {
-          console.log("Geofence plugin initialized");
-      });
+      // $window.geofence.initialize(function () {
+      //     console.log("Geofence plugin initialized");
+      // });
     }
 
   });
