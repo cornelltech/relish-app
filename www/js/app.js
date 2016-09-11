@@ -374,7 +374,7 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
       if($window.cordova && $window.BackgroundGeolocation){
           bg = $window.BackgroundGeolocation;
           bg.getCurrentPosition(function(location, taskId){
-            console.log("current position ", location);
+            console.log("current position ", JSON.stringify(location));
             deferred.resolve(location);
             bg.finish(taskId);
           });
@@ -600,7 +600,7 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
         var lastTimestamp = new Date( localStorageService.get('last', 0) );
         console.log(diff2Dates(now, lastTimestamp));
 
-        if(dist <= 1.75*RADIUS && diff2Dates(now, lastTimestamp) < WAIT){
+        if(dist <= 1.75*RADIUS && WAIT <= diff2Dates(now, lastTimestamp) ){
           // console.log("In the region");
           // proceed if in region
           $scope.inRegion = true;
