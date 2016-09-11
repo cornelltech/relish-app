@@ -27,42 +27,6 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
     if($window.StatusBar) {
       StatusBar.styleDefault();
     }
-
-    if ($window.geofence === undefined) {
-      console.log("Geofence Plugin not found.");
-    }
-
-    // geofence stuff
-    if($window.cordova && $window.geofence) {
-      console.log("Geofence Plugin found.");
-      // on transition 
-      $window.geofence.onTransitionReceived = function(geofences){
-        console.log("geofence.onTransitionReceived");
-        geofences.forEach(function (geo) {
-          console.log('Geofence transition detected', JSON.stringify(geo));
-          if($window.cordova && $window.cordova.plugins.notification.local){
-            $window.cordova.plugins.notification.local.schedule({
-              id: geo.notification.id,
-              title: geo.notification.title,
-              text: geo.notification.text,
-            });
-          }else{
-            console.log("missing local notification plugin");
-          }
-        });
-      }
-
-      // on notification click
-      $window.geofence.onNotificationClicked = function (notificationData) {
-          console.log("geofence.onNotificationClicked")
-          console.log(notificationData);
-      };
-
-      // $window.geofence.initialize(function () {
-      //     console.log("Geofence plugin initialized");
-      // });
-    }
-
   });
 
   // check if the user is authenticated
@@ -286,6 +250,153 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
   }
 })
 
+.service('GeoService', function($q, $window, $ionicPlatform){
+  var bg = undefined;
+  var options = {
+    // Application config
+    debug: false,
+    stopOnTerminate: false,
+    startOnBoot: true
+  };
+  
+  function initBackgroundLocation(){
+    console.log("initBackgroundLocation");
+    var deferred = $q.defer();
+    $ionicPlatform.ready(function() {
+      if($window.cordova && $window.BackgroundGeolocation){
+        bg = $window.BackgroundGeolocation;
+        bg.configure(options, function(state){
+          
+          console.log(state);
+          if (!state.enabled) {
+            bg.start(function() {
+              deferred.resolve();
+            });
+          }else{
+            deferred.resolve();
+          }
+          
+        });
+      }else{
+        console.log("Geo plugin not found");
+        deferred.reject();
+      }
+    });
+    return deferred.promise;
+  }
+
+  function configureGeofence(options){
+    // {
+    //   identifier: "Geofence 1",
+    //   notifyOnEntry: true,
+    //   notifyOnExit: true,
+    //   radius: 200,
+    //   latitude: 45.5248868,
+    //   longitude:  -73.6424362
+    // }
+    console.log("configureGeofence")
+    console.log(options)
+    var deferred = $q.defer();
+
+    $ionicPlatform.ready(function() {
+
+      if($window.cordova && $window.BackgroundGeolocation){
+        bg = $window.BackgroundGeolocation;
+
+        // bg.getState(function(state) {
+        //   console.log(JSON.stringify(state));
+        //   deferred.resolve();
+        // });
+
+        bg.configure(options, function(state){
+          
+          bg.removeGeofence(options.identifier);
+          bg.addGeofence(options);
+
+          bg.onGeofence(function(geofence, taskId) {
+            try {
+                var identifier = geofence.identifier;
+                var action     = geofence.action;
+                var location   = geofence.location;
+
+                console.log("- A Geofence transition occurred");
+                console.log("  identifier: ", identifier);
+                console.log("  action: ", action);
+                console.log("  location: ", JSON.stringify(location));
+
+                if($window.cordova && $window.cordova.plugins.notification.local){
+                  $window.cordova.plugins.notification.local.schedule({
+                    title: "Click to claim your coupon",
+                  });
+                }else{
+                  console.log("missing local notification plugin");
+                }
+
+
+            } catch(e) {
+
+                console.error("An error occurred in my code!", e);
+
+            }
+            // Be sure to call #finish!!
+            bg.finish(taskId);
+
+          });
+
+          if(!state.enabled){
+            console.log("State is not enabled, starting monitoring");
+            bg.start(function(){ 
+              deferred.resolve();
+            });
+          }else{
+            console.log("State is already enabled, skipping");
+            deferred.resolve();
+          }
+        });
+
+      }else{
+        console.log("Geo plugin not found");
+        deferred.reject();
+      }
+      
+    });
+
+    return deferred.promise;
+  }
+
+
+  function getCurrentPosition(){
+
+    var deferred = $q.defer();
+
+    $ionicPlatform.ready(function() {
+      
+      if($window.cordova && $window.BackgroundGeolocation){
+          bg = $window.BackgroundGeolocation;
+          bgGeo.getCurrentPosition(function(location, taskId){
+            console.log("current position ", location);
+            deferred.resolve();
+          }, function(err){
+            console.log(err);
+            deferred.reject();
+          });
+      }else{
+        console.log("Geo plugin not found");
+        deferred.reject();
+      }
+    
+    });
+
+    return deferred.promise;
+  }
+
+  return {
+    initBackgroundLocation: initBackgroundLocation,
+    configureGeofence: configureGeofence,
+    getCurrentPosition: getCurrentPosition
+  }
+})
+
 
 .controller('RegisterController', function($scope, $state, ParticipantService){
   console.log('RegisterController()');
@@ -316,25 +427,31 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
   $scope.goToPermissions = goToPermissions;
 })
 
-.controller('PermissionsController', function($scope, $state, $window, $ionicPlatform){
+.controller('PermissionsController', function($scope, $state, $window, GeoService){
   function requestPermissions(){
-    $ionicPlatform.ready(function(){
-      if($window.cordova && $window.geofence){
-        $window.geofence.initialize().then(function () {
-          console.log("Successful initialization");
-          $state.go('questions');
-        }, function (error) {
-          console.log(error);
-          $state.go('questions');
-        });
-      }else{
-        console.log("Plugin not found");
-        alert("Plugin not found");
+    // $ionicPlatform.ready(function(){
 
+      
+    //   if($window.cordova && $window.geofence){
+    //     $window.geofence.initialize().then(function () {
+    //       console.log("Successful initialization");
+    //       $state.go('questions');
+    //     }, function (error) {
+    //       console.log(error);
+    //       $state.go('questions');
+    //     });
+    //   }else{
+    //     console.log("Plugin not found");
+    //     alert("Plugin not found");
+
+    //     $state.go('questions');
+    //   }
+    // });
+
+    GeoService.initBackgroundLocation()
+      .then(function(){
         $state.go('questions');
-      }
-    });
-    
+      });
   }
   $scope.requestPermissions = requestPermissions;
 })
@@ -381,10 +498,9 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
   $scope.submitAnswer = submitAnswer;
 })
 
-.controller('PrimeController', function($scope, $state, $q, $window, $timeout, $ionicPlatform, StudyService, Geolocation, Geofence){
+.controller('PrimeController', function($scope, $state, $q, $window, $timeout, $ionicPlatform, StudyService, GeoService){
   console.log('=============================================');
   console.log('PrimeController');
-
 
   var DELAY = 1000; //ms
   var RADIUS = 50; //m
@@ -432,18 +548,21 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
   function getCoords(){
     var deferred = $q.defer();
     $ionicPlatform.ready(function(){
-      Geolocation.getCurrentPosition()
-        .then(function(position){
-          deferred.resolve({
-            lat: position.coords.latitude,
-            lng: position.coords.longitude
-          });
-        }, function(e) {
-          // error
-          console.log(e);
-          // deferred.reject(e);
-          deferred.resolve({"lat":40.740999620828084,"lng":-74.00181926300179})
-        });
+      // Geolocation.getCurrentPosition(({
+      //   var 
+      // })
+      //   .then(function(position){
+      //     deferred.resolve({
+      //       lat: position.coords.latitude,
+      //       lng: position.coords.longitude
+      //     });
+      //   }, function(e) {
+      //     // error
+      //     console.log(e);
+      //     // deferred.reject(e);
+      //     deferred.resolve({"lat":40.740999620828084,"lng":-74.00181926300179})
+      //   });
+      deferred.resolve({"lat":40.740999620828084,"lng":-74.00181926300179});
     });
     
     return deferred.promise;
@@ -480,11 +599,11 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
         $scope.dist = dist;
 
         if(dist <= 1.75*RADIUS){
-          console.log("In the region");
+          // console.log("In the region");
           // proceed if in region
           $scope.inRegion = true;
         }else{
-          console.log("out of region");
+          // console.log("out of region");
           $scope.inRegion = false;
         }
         checkActionBtnState();
@@ -510,25 +629,15 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
 
         $scope.regionCoords = {lat: study.region.lat, lng: study.region.lng};
         
-        // update the geofence
-        $ionicPlatform.ready(function(){
-          if($window.cordova && $window.geofence){
-            var geoFence = Geofence.create({
-              latitude: $scope.study.region.lat,
-              longitude: $scope.study.region.lng,
-              radius: RADIUS,
-              notification: {
-                id: 1,
-                title: "Click to redeem coupon!",
-                text: "",
-                openAppOnClick: true
-              }
-            });
-            Geofence.addOrUpdate(geoFence);
-          }else{
-            console.log("plugin not found, skipping geofence update");
-          }
+        GeoService.configureGeofence({
+          identifier: $scope.study.region.description,
+          notifyOnEntry: true,
+          notifyOnExit: false,
+          radius: RADIUS,
+          latitude: $scope.study.region.lat,
+          longitude:  $scope.study.region.lng
         });
+
         StudyService.getCondition($scope.study.conditions)
           .then(function(r){
             console.log("Got the condition");
