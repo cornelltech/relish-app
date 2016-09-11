@@ -429,29 +429,22 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
 
 .controller('PermissionsController', function($scope, $state, $window, GeoService){
   function requestPermissions(){
-    // $ionicPlatform.ready(function(){
+    $ionicPlatform.ready(function(){
 
-      
-    //   if($window.cordova && $window.geofence){
-    //     $window.geofence.initialize().then(function () {
-    //       console.log("Successful initialization");
-    //       $state.go('questions');
-    //     }, function (error) {
-    //       console.log(error);
-    //       $state.go('questions');
-    //     });
-    //   }else{
-    //     console.log("Plugin not found");
-    //     alert("Plugin not found");
-
-    //     $state.go('questions');
-    //   }
-    // });
-
-    GeoService.initBackgroundLocation()
+      GeoService.initBackgroundLocation()
       .then(function(){
+        if($window.cordova && $window.cordova.plugins.notification.local){
+          $window.cordova.plugins.notification.local.registerPermission(function (granted) {
+            console.log('Permission has been granted: ' + granted);
+          });
+        }else{
+          console.log("missing local notification plugin");
+        }
         $state.go('questions');
       });
+
+    });
+
   }
   $scope.requestPermissions = requestPermissions;
 })
