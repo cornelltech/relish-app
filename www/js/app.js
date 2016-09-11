@@ -427,7 +427,7 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
   $scope.goToPermissions = goToPermissions;
 })
 
-.controller('PermissionsController', function($scope, $state, $window, GeoService){
+.controller('PermissionsController', function($scope, $state, $window, $ionicPlatform, GeoService){
   function requestPermissions(){
     $ionicPlatform.ready(function(){
 
