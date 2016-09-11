@@ -373,12 +373,10 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
       
       if($window.cordova && $window.BackgroundGeolocation){
           bg = $window.BackgroundGeolocation;
-          bgGeo.getCurrentPosition(function(location, taskId){
+          bg.getCurrentPosition(function(location, taskId){
             console.log("current position ", location);
-            deferred.resolve();
-          }, function(err){
-            console.log(err);
-            deferred.reject();
+            deferred.resolve(location);
+            bg.finish(taskId);
           });
       }else{
         console.log("Geo plugin not found");
@@ -491,12 +489,13 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
   $scope.submitAnswer = submitAnswer;
 })
 
-.controller('PrimeController', function($scope, $state, $q, $window, $timeout, $ionicPlatform, StudyService, GeoService){
+.controller('PrimeController', function($scope, $state, $q, $window, $timeout, $ionicPlatform, localStorageService, StudyService, GeoService){
   console.log('=============================================');
   console.log('PrimeController');
 
   var DELAY = 1000; //ms
   var RADIUS = 50; //m
+  var WAIT = 2; // hrs
 
   $scope.width = 0.85 * $window.innerWidth;
   $scope.isPriming = true;
@@ -530,32 +529,31 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
   $scope.showCoupon = showCoupon;
 
   function reset(){
-    console.log('click');
     $scope.inRegion = false;
     $scope.isPriming = true;
     checkActionBtnState();
+    var now = new Date();
+    localStorageService.set('last', now.toString());
   }
   $scope.reset = reset;
 
 
   function getCoords(){
+    // console.log('getcoords')
     var deferred = $q.defer();
     $ionicPlatform.ready(function(){
-      // Geolocation.getCurrentPosition(({
-      //   var 
-      // })
-      //   .then(function(position){
-      //     deferred.resolve({
-      //       lat: position.coords.latitude,
-      //       lng: position.coords.longitude
-      //     });
-      //   }, function(e) {
-      //     // error
-      //     console.log(e);
-      //     // deferred.reject(e);
-      //     deferred.resolve({"lat":40.740999620828084,"lng":-74.00181926300179})
-      //   });
-      deferred.resolve({"lat":40.740999620828084,"lng":-74.00181926300179});
+      GeoService.getCurrentPosition()
+      .then(function(location){
+        // console.log(location);
+        deferred.resolve({
+          lat: location.coords.latitude,
+          lng: location.coords.longitude
+        });
+      })
+      .catch(function(err){
+        console.log(err);
+        deferred.resolve({"lat":40.740999620828084,"lng":-74.00181926300179});
+      });
     });
     
     return deferred.promise;
@@ -578,6 +576,12 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
     return deg * (Math.PI/180)
   }
 
+  function diff2Dates(d1, d2){
+    // returns in hours
+    var timeDiff = Math.abs(d2.getTime() - d1.getTime());
+    return Math.ceil(timeDiff / (1000 * 3600)); 
+  }
+
   function monitorPosition(){
     // console.log("monitorPosition()")
     // Get the current coords
@@ -591,7 +595,12 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
         var dist = getDistance(coords.lat, coords.lng, $scope.study.region.lat, $scope.study.region.lng);
         $scope.dist = dist;
 
-        if(dist <= 1.75*RADIUS){
+        // get last time the coupon was viewed
+        var now = new Date();
+        var lastTimestamp = new Date( localStorageService.get('last', 0) );
+        console.log(diff2Dates(now, lastTimestamp));
+
+        if(dist <= 1.75*RADIUS && diff2Dates(now, lastTimestamp) < WAIT){
           // console.log("In the region");
           // proceed if in region
           $scope.inRegion = true;
@@ -610,7 +619,7 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
     $timeout(function(){
       monitorPosition();
       poll();
-    }, 1000);
+    }, DELAY);
   }
 
 
@@ -653,9 +662,6 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
 
   $scope.$on("$ionicView.enter", function(event, data){
     // handle event
-    console.log('======================================')
-    console.log("ENTER");
-    console.log('======================================')
     sync();
     checkActionBtnState();
   });
