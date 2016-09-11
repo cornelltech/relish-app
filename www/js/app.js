@@ -12,7 +12,6 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
 
 
 
-
 .run(function($rootScope, $window, $ionicLoading, $ionicPlatform, $urlRouter, $state, ParticipantService) {
   $ionicPlatform.ready(function() {
     if($window.cordova && $window.cordova.plugins.Keyboard) {
@@ -29,9 +28,13 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
       StatusBar.styleDefault();
     }
 
+    if ($window.geofence === undefined) {
+      console.log("Geofence Plugin not found.");
+    }
+
     // geofence stuff
     if($window.cordova && $window.geofence) {
-
+      console.log("Geofence Plugin found.");
       // on transition 
       $window.geofence.onTransitionReceived = function(geofences){
         console.log("geofence.onTransitionReceived");
@@ -464,12 +467,12 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
   }
 
   function monitorPosition(){
-    console.log("monitorPosition()")
+    // console.log("monitorPosition()")
     // Get the current coords
     getCoords()
       .then(function(coords){
-        console.log("Got the coords");
-        console.log(coords);
+        // console.log("Got the coords");
+        // console.log(coords);
         $scope.currentCoords = {lat: coords.lat, lng: coords.lng};
 
         // figure out if we are in the region of interest
@@ -481,11 +484,10 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
           // proceed if in region
           $scope.inRegion = true;
         }else{
-          $scope.inRegion = false;
           console.log("out of region");
+          $scope.inRegion = false;
         }
         checkActionBtnState();
-        
       })
       .catch(function(e){
         console.log(e);
@@ -494,7 +496,6 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
 
   function poll(){
     $timeout(function(){
-      console.log("timeout");
       monitorPosition();
       poll();
     }, 1000);
@@ -517,7 +518,7 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
               longitude: $scope.study.region.lng,
               radius: RADIUS,
               notification: {
-                id: "1",
+                id: 1,
                 title: "Click to redeem coupon!",
                 text: "",
                 openAppOnClick: true

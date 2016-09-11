@@ -15,7 +15,7 @@ angular.module("relish").factory("Geofence", function (
 
             var defaultGeofence = {
                 // id: UUIDjs.create().toString(),
-                id: "1",
+                id: 1,
                 latitude: 50,
                 longitude: 50,
                 radius: 1000,
