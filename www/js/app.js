@@ -426,25 +426,42 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
 })
 
 .controller('PermissionsController', function($scope, $state, $window, $ionicPlatform, GeoService){
-  function requestPermissions(){
+  permissionsGranted = 0;
+  
+  function requestGeoPermissions(){
     $ionicPlatform.ready(function(){
-
       GeoService.initBackgroundLocation()
-      .then(function(){
-        if($window.cordova && $window.cordova.plugins.notification.local){
-          $window.cordova.plugins.notification.local.registerPermission(function (granted) {
-            console.log('Permission has been granted: ' + granted);
-          });
-        }else{
-          console.log("missing local notification plugin");
-        }
-        $state.go('questions');
-      });
-
+        .then(function(){
+          permissionsGranted += 1;
+          shouldProceed();    
+        });
     });
 
   }
-  $scope.requestPermissions = requestPermissions;
+  $scope.requestGeoPermissions = requestGeoPermissions;
+
+  function requestPushPermissions(){
+    $ionicPlatform.ready(function(){
+      if($window.cordova && $window.cordova.plugins.notification.local){
+          $window.cordova.plugins.notification.local.registerPermission(function (granted) {
+            console.log('Permission has been granted: ' + granted);
+            permissionsGranted += 1;
+          });
+      }else{
+          console.log("missing local notification plugin");
+      }
+
+      shouldProceed();
+    });
+  }
+  $scope.requestPushPermissions = requestPushPermissions; 
+
+  function shouldProceed(){
+    if(permissionsGranted >= 2){
+      $state.go('questions');
+    }
+  }
+
 })
 
 .controller('QuestionsController', function($scope, $state,  QuestionService){
@@ -551,7 +568,7 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
         });
       })
       .catch(function(err){
-        console.log(err);
+        // console.log(err);
         deferred.resolve({"lat":40.740999620828084,"lng":-74.00181926300179});
       });
     });
@@ -598,7 +615,7 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
         // get last time the coupon was viewed
         var now = new Date();
         var lastTimestamp = new Date( localStorageService.get('last', 0) );
-        console.log(diff2Dates(now, lastTimestamp));
+        // console.log(diff2Dates(now, lastTimestamp));
 
         if(dist <= 1.75*RADIUS && WAIT <= diff2Dates(now, lastTimestamp) ){
           // console.log("In the region");

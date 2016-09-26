@@ -1,10 +1,18 @@
 <ion-view class="padding">
     <div class="flex-center-container">
-        <h1 class="title">Location and Notification Permissions</h1>
-        <p>We need to request geo permissions in order to ...</p>
-
+        <h1 class="title">Location Permissions</h1>
+        <p>Relish needs location permission so that it knows when you are near your food coop. Without this, we will not be able to send you relevent updates when you are nearby.</p>
         <button class="button button-block button-outline button-balanced" 
-                ng-click="requestPermissions()">
+                ng-click="requestGeoPermissions()">
+            Ok
+        </button>
+
+        <hr/>
+
+        <h1 class="title">Notification Permissions</h1>
+        <p>Relish needs notification permission so that we can send you updates when you are near your food coop.</p>
+        <button class="button button-block button-outline button-balanced" 
+                ng-click="requestPushPermissions()">
             Ok
         </button>
     </div>

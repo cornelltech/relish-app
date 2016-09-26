@@ -67,9 +67,9 @@
 
 
 <div ng-if="DEBUG" class="DEBUG" style="font-size:80%; background-color:red; position:absolute; bottom:0px; width:100vw;">
-    <p style="margin:0px">Region: {{regionCoords.lat}}, {{regionCoords.lng}}</p>
-    <p style="margin:0px">Current: {{currentCoords.lat}}, {{currentCoords.lng}}</p>
-    <p style="margin:0px">Dist: {{dist}}m | Radius: {{radius}}m | inRegion: {{inRegion}}</p>
+    <p style="margin:0px"><b>Target Region:</b> {{regionCoords.lat.toFixed(4)}}, {{regionCoords.lng.toFixed(4)}}</p>
+    <p style="margin:0px"><b>Current:</b> {{currentCoords.lat.toFixed(4)}}, {{currentCoords.lng.toFixed(4)}}</p>
+    <p style="margin:0px"><b>Dist:</b> {{dist.toFixed(4)}}m | <b>Radius:</b> {{radius.toFixed(4)}}m | <b>inRegion:</b> {{inRegion}}</p>
 </div>
 
 </ion-view>
