@@ -197,7 +197,13 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
     }).then(function(r){
       r.data.results.forEach(function(obj){
         if(obj.active){
+          
+          console.log("================>StudyService.loadStudies<================");
+          console.log(obj);
+          console.log("================>/StudyService.loadStudies<================");
+
           deferred.resolve(obj);
+
         }
       });
       // deferred.reject( );
@@ -213,9 +219,6 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
     var condition = undefined;
     var lastCondition = undefined;
     
-
-    console.log(conditions)
-
     // get the id of the last condition used
     var lastConditionId = localStorageService.get('lastCondition', -1);
 
@@ -245,6 +248,10 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
     // cache
     localStorageService.set('lastCondition', condition.id);
 
+    console.log("================>StudyService.getCondition<================");
+    console.log(condition);
+    console.log("================>/StudyService.getCondition<================");
+
     deferred.resolve(condition);
 
     return deferred.promise;
@@ -257,9 +264,9 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
 })
 
 .service('GeoService', function($q, $window, $ionicPlatform){
-  var bg = undefined;
-  var currentCoords = {lat: 40.740837, lng: -74.001806};
-  var regionCoords = {lat: 0, lng: 0};
+  var currentCoords = {lat: 90, lng: 180};
+  var watchId = null;
+  
   var options = {
     // Application config
     debug: false,
@@ -286,61 +293,15 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
   
   function initBackgroundLocation(){
     console.log("================>initBackgroundLocation<================");
-    console.log("STARTING");
-    console.log("================>/initBackgroundLocation<================");
 
     var deferred = $q.defer();
-
-    $ionicPlatform.ready(function() {
-      
-      if($window.cordova && $window.BackgroundGeolocation){
-        bg = $window.BackgroundGeolocation;
-        
-        bg.on('location', function(location, taskId){
-           try {
-
-              let coords = location.coords;
-              let lat    = coords.latitude;
-              let lng    = coords.longitude;
-
-              currentCoords.lat = lat;
-              currentCoords.lng = lng;
-
-              console.log("================>:location<================");
-              console.log("LOCATION");
-              console.log(location);
-              console.log("================>/:location<================");
-
-              bg.finish(taskId);
-
-          } catch (error) {
-              
-              console.log("ERROR => this.bgGeo.on('location)");
-              console.log(error);
-              bg.finish(taskId);
-          }
-
-        });
-        
-
-        bg.configure(options, function(state){
-          console.log("================>:bg.configure()<================");
-          console.log("STATE");
-          console.log(state);
-          console.log("================>:bg.configure()<================");
-          
-          if (!state.enabled) {
-            bg.start(function(){ });
-          }
-
-          deferred.resolve();
-          
-        });
-      }else{
-        console.log("Geo plugin not found");
-        deferred.reject();
-      }
+    navigator.geolocation.getCurrentPosition(function(position){
+      deferred.resolve();
+    }, function(e){
+      deferred.reject(e);
     });
+
+    console.log("================>/initBackgroundLocation<================");
     return deferred.promise;
   }
 
@@ -358,100 +319,17 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
     var deferred = $q.defer();
 
     $ionicPlatform.ready(function() {
-
-      if($window.cordova && $window.BackgroundGeolocation){
-        bg = $window.BackgroundGeolocation;
-
-        // bg.getState(function(state) {
-        //   console.log(JSON.stringify(state));
-        //   deferred.resolve();
-        // });
-
-        bg.configure(options, function(state){
-          
-          bg.removeGeofence(options.identifier);
-          bg.addGeofence(options);
-
-          bg.onGeofence(function(geofence, taskId) {
-            try {
-                var identifier = geofence.identifier;
-                var action     = geofence.action;
-                var location   = geofence.location;
-
-                console.log("- A Geofence transition occurred");
-                console.log("  identifier: ", identifier);
-                console.log("  action: ", action);
-                console.log("  location: ", JSON.stringify(location));
-
-                if($window.cordova && $window.cordova.plugins.notification.local){
-                  $window.cordova.plugins.notification.local.schedule({
-                    title: "Click to claim your coupon",
-                  });
-                }else{
-                  console.log("missing local notification plugin");
-                }
-
-
-            } catch(e) {
-
-                console.error("An error occurred in my code!", e);
-
-            }
-            // Be sure to call #finish!!
-            bg.finish(taskId);
-
-          });
-
-          if(!state.enabled){
-            console.log("State is not enabled, starting monitoring");
-            bg.start(function(){ 
-              deferred.resolve();
-            });
-          }else{
-            console.log("State is already enabled, skipping");
-            deferred.resolve();
-          }
-        });
-
-      }else{
-        console.log("Geo plugin not found");
-        deferred.reject();
-      }
       
     });
 
-    return deferred.promise;
-  }
-
-
-  function getCurrentPosition(){
-
-    var deferred = $q.defer();
-
-    $ionicPlatform.ready(function() {
-      
-      if($window.cordova && $window.BackgroundGeolocation){
-          bg = $window.BackgroundGeolocation;
-          bg.getCurrentPosition(function(location, taskId){
-            deferred.resolve(location);
-            bg.finish(taskId);
-          });
-      }else{
-        console.log("Geo plugin not found");
-        deferred.reject('Plugin not found');
-      }
-    
-    });
-
+    deferred.resolve();
     return deferred.promise;
   }
 
   return {
     currentCoords: currentCoords,
-    regionCoords: regionCoords,
     initBackgroundLocation: initBackgroundLocation,
     configureGeofence: configureGeofence,
-    getCurrentPosition: getCurrentPosition,
     getDistance: getDistance
   }
 })
@@ -578,6 +456,7 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
   var DELAY = 1000; //ms
   var RADIUS = 50; //m
   var WAIT = 2; // hrs
+  var watchId = null;
 
   $scope.width = 0.85 * $window.innerWidth;
   $scope.isPriming = true;
@@ -588,18 +467,9 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
 
   $scope.DEBUG = true;
   $scope.currentCoords = GeoService.currentCoords;
-  $scope.regionCoords = GeoService.regionCoords;
+  $scope.regionCoords = {lat: 0, lng: 0};
   $scope.dist = 0;
-  $scope.radius = RADIUS;
-
-
-  // watchers
-  $scope.$watch('currentCoords', function() {
-    updateOnCoordChange();
-  });
-  $scope.$watch('regionCoords', function() {
-    updateOnCoordChange();
-  });
+  $scope.radius = RADIUS;  
 
   function updateOnCoordChange(){
     // run this on var changes to see if regions overlap 
@@ -649,60 +519,16 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
   $scope.reset = reset;
 
   
-
   function diff2Dates(d1, d2){
     // returns in hours
     var timeDiff = Math.abs(d2.getTime() - d1.getTime());
     return Math.ceil(timeDiff / (1000 * 3600)); 
   }
 
-  function monitorPosition(){
-    // console.log("monitorPosition()")
-    // Get the current coords
-    getCoords()
-      .then(function(coords){
-        // console.log("Got the coords");
-        // console.log(coords);
-        $scope.currentCoords = {lat: coords.lat, lng: coords.lng};
-
-        // figure out if we are in the region of interest
-        var dist = getDistance(coords.lat, coords.lng, $scope.study.region.lat, $scope.study.region.lng);
-        $scope.dist = dist;
-
-        // get last time the coupon was viewed
-        var now = new Date();
-        var lastTimestamp = new Date( localStorageService.get('last', 0) );
-        // console.log(diff2Dates(now, lastTimestamp));
-
-        if(dist <= 1.75*RADIUS && WAIT <= diff2Dates(now, lastTimestamp) ){
-          // console.log("In the region");
-          // proceed if in region
-          $scope.inRegion = true;
-        }else{
-          // console.log("out of region");
-          $scope.inRegion = false;
-        }
-        checkActionBtnState();
-      })
-      .catch(function(e){
-        console.log(e);
-      });
-  }
-
-  // function poll(){
-  //   $timeout(function(){
-  //     monitorPosition();
-  //     poll();
-  //   }, DELAY);
-  // }
-
-
   function sync(){
     StudyService.loadStudies()
       .then(function(study){
-        console.log("Got the study");
         $scope.study = study;
-
         $scope.regionCoords = {lat: study.region.lat, lng: study.region.lng};
         
         GeoService.configureGeofence({
@@ -716,11 +542,7 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
 
         StudyService.getCondition($scope.study.conditions)
           .then(function(r){
-            console.log("Got the condition");
             $scope.condition = r;
-            
-            // poll();
-
           })
           .catch(function(e){
             console.log(e);
@@ -734,11 +556,74 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
   }
 
 
+  // watchers
+  $scope.$watch('currentCoords', function() {
+    console.log('=============currentCoords==================');
+    updateOnCoordChange();
+    console.log('============/currentCoords==================');
+  });
+  $scope.$watch('regionCoords', function() {
+    console.log('=============regionCoords==================');
+    updateOnCoordChange();
+    console.log('============/regionCoords==================');
+  });
+  
+  $ionicPlatform.ready(function() {
+
+    try {
+
+      if( navigator.geolocation ){
+
+        // if watchId exists, clear It
+        if(watchId){
+          navigator.geolocation.clearWatch(watchId);
+        }
+
+        watchId = navigator.geolocation.watchPosition(function(position){
+          
+          $scope.currentCoords = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          };
+          
+          console.log("================>navigator.geolocation.watchPosition<================");
+          console.log($scope.currentCoords);
+          console.log("================>/navigator.geolocation.watchPosition<================");
+
+          $scope.$apply();
+
+        }, function(e){
+          console.log(e);
+
+        }, { maximumAge: 3000, timeout: 5000, enableHighAccuracy: true });
+      }else{
+        console.log("Cannot find navigator");
+      }
+
+
+    } catch (error) {
+      console.log("There was an error");
+      console.log(error);
+    }
+
+  });
+
   $scope.$on("$ionicView.enter", function(event, data){
     // handle event
-    sync();
-    checkActionBtnState();
+    console.log('=============$ionicView.enter==================');
+    GeoService.initBackgroundLocation()
+      .then(function(){
+        sync();
+        checkActionBtnState();
+      })
+      .catch(function(e){
+        console.log("there was an issue starting up");
+      });
+    console.log('============/$ionicView.enter==================');
+    
   });
+
+  
 
 })
 
