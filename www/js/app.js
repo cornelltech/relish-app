@@ -213,6 +213,9 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
     var condition = undefined;
     var lastCondition = undefined;
     
+
+    console.log(conditions)
+
     // get the id of the last condition used
     var lastConditionId = localStorageService.get('lastCondition', -1);
 
@@ -223,6 +226,9 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
       lastCondition = conditions.find(function(obj, indx){
         return obj.id == lastConditionId;
       });
+      if( lastCondition == null ){
+        lastCondition = conditions[0];
+      }
     }
 
     // get the next condition in the list
@@ -607,11 +613,10 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
     var lastTimestamp = new Date( localStorageService.get('last', 0) );
 
     if(dist <= CONST*RADIUS && WAIT <= diff2Dates(now, lastTimestamp) ){
-      // console.log("In the region");
       // proceed if in region
       $scope.inRegion = true;
     }else{
-      // console.log("out of region");
+      // not in region
       $scope.inRegion = false;
     }
     checkActionBtnState();
