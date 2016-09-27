@@ -263,7 +263,7 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
   }
 })
 
-.service('GeoService', function($q, $window, $ionicPlatform){
+.service('GeoService', function($q, $rootScope, $window, $ionicPlatform, $cordovaLocalNotification){
   var bg = null;
   var currentCoords = {lat: 90, lng: 180};
 
@@ -368,19 +368,26 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
               console.log("  location: ", JSON.stringify(location));
 
               // generate a notification
-              if(cordova.plugins.notification){
-                cordova.plugins.notification.local.schedule({
-                    id: 1,
-                    title: "Relish",
-                    text: "🎉Congrats, there is a deal availible!🎉",
-                    data: { meetingId:"#123FG8" }
-                });
-                cordova.plugins.notification.local.on("click", function (notification) {
-                    if (notification.id == 1) {
-                        console.log("========>cordova.plugins.notification.local.on:click");
-                    }
-                });
-              }
+              $cordovaLocalNotification.clearAll();
+
+              $cordovaLocalNotification.schedule({
+                id: parseInt(Math.random()*1000000),
+                text: "🎉Congrats, there is a deal availible!🎉"
+              }).then(function(r){
+                console.log("notification Success")
+                console.log(JSON.stringify(r));
+              }).catch(function(e){
+                console.log("notification Error")
+                console.log(JSON.stringify(e));
+              });
+
+              $rootScope.$on('$cordovaLocalNotification:trigger', function(event, notification, state) {
+                console.log('$cordovaLocalNotification:trigger');
+              });
+
+              $rootScope.$on('$cordovaLocalNotification:click', function(event, notification, state) {
+                console.log('$cordovaLocalNotification:click');
+              });
 
 
             } catch(e) {
