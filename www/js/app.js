@@ -29,6 +29,14 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
     }
   });
 
+  $rootScope.$on('$cordovaLocalNotification:trigger', function(event, notification, state) {
+    console.log('$cordovaLocalNotification:trigger');
+  });
+
+  $rootScope.$on('$cordovaLocalNotification:click', function(event, notification, state) {
+    console.log('$cordovaLocalNotification:click');
+  });
+
   // check if the user is authenticated
   $rootScope.$on('$locationChangeSuccess', function(evt) {
      console.log("Checking for authentication token");
@@ -368,33 +376,29 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
               console.log("  location: ", JSON.stringify(location));
 
               // generate a notification
-              $cordovaLocalNotification.clearAll();
+              // $cordovaLocalNotification.clearAll();
 
               $cordovaLocalNotification.schedule({
-                id: parseInt(Math.random()*1000000),
-                text: "🎉Congrats, there is a deal availible!🎉"
+                text: "Congrats, there is a deal availible!"
               }).then(function(r){
+                
                 console.log("notification Success")
                 console.log(JSON.stringify(r));
+                bg.finish(taskId);
+
               }).catch(function(e){
+                
                 console.log("notification Error")
                 console.log(JSON.stringify(e));
+                bg.finish(taskId);
+                
               });
-
-              $rootScope.$on('$cordovaLocalNotification:trigger', function(event, notification, state) {
-                console.log('$cordovaLocalNotification:trigger');
-              });
-
-              $rootScope.$on('$cordovaLocalNotification:click', function(event, notification, state) {
-                console.log('$cordovaLocalNotification:click');
-              });
-
 
             } catch(e) {
               console.error("An error occurred in my code!", e);
+              bg.finish(taskId);
             }
-            // Be sure to call #finish!!
-            bg.finish(taskId);
+
           });
           
           // query for all geofences
@@ -568,7 +572,7 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
   $scope.submitAnswer = submitAnswer;
 })
 
-.controller('PrimeController', function($scope, $state, $q, $window, $timeout, $ionicPlatform, localStorageService, StudyService, GeoService){
+.controller('PrimeController', function($scope, $state, $q, $window, $timeout, $ionicPlatform, $cordovaLocalNotification, localStorageService, StudyService, GeoService){
   console.log('=============================================');
   console.log('PrimeController');
 
