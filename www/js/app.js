@@ -252,29 +252,82 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
 
 .service('GeoService', function($q, $window, $ionicPlatform){
   var bg = undefined;
+  var currentCoords = {lat: 40.740837, lng: -74.001806};
+  var regionCoords = {lat: 0, lng: 0};
   var options = {
     // Application config
     debug: false,
     stopOnTerminate: false,
     startOnBoot: true
   };
+
+  function getDistance(lat1,lon1,lat2,lon2) {
+    var R = 6371; // Radius of the earth in km
+    var dLat = deg2rad(lat2-lat1);  // deg2rad below
+    var dLon = deg2rad(lon2-lon1); 
+    var a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * 
+            Math.sin(dLon/2) * Math.sin(dLon/2);
+    var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+    var d = R * c * 1000; // Distance in m
+
+    return d;
+  }
+
+  function deg2rad(deg) {
+    return deg * (Math.PI/180)
+  }
   
   function initBackgroundLocation(){
-    console.log("initBackgroundLocation");
+    console.log("================>initBackgroundLocation<================");
+    console.log("STARTING");
+    console.log("================>/initBackgroundLocation<================");
+
     var deferred = $q.defer();
+
     $ionicPlatform.ready(function() {
+      
       if($window.cordova && $window.BackgroundGeolocation){
         bg = $window.BackgroundGeolocation;
-        bg.configure(options, function(state){
-          
-          console.log(state);
-          if (!state.enabled) {
-            bg.start(function() {
-              deferred.resolve();
-            });
-          }else{
-            deferred.resolve();
+        
+        bg.on('location', function(location, taskId){
+           try {
+
+              let coords = location.coords;
+              let lat    = coords.latitude;
+              let lng    = coords.longitude;
+
+              currentCoords.lat = lat;
+              currentCoords.lng = lng;
+
+              console.log("================>:location<================");
+              console.log("LOCATION");
+              console.log(location);
+              console.log("================>/:location<================");
+
+              bg.finish(taskId);
+
+          } catch (error) {
+              
+              console.log("ERROR => this.bgGeo.on('location)");
+              console.log(error);
+              bg.finish(taskId);
           }
+
+        });
+        
+
+        bg.configure(options, function(state){
+          console.log("================>:bg.configure()<================");
+          console.log("STATE");
+          console.log(state);
+          console.log("================>:bg.configure()<================");
+          
+          if (!state.enabled) {
+            bg.start(function(){ });
+          }
+
+          deferred.resolve();
           
         });
       }else{
@@ -374,13 +427,12 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
       if($window.cordova && $window.BackgroundGeolocation){
           bg = $window.BackgroundGeolocation;
           bg.getCurrentPosition(function(location, taskId){
-            console.log("current position ", JSON.stringify(location));
             deferred.resolve(location);
             bg.finish(taskId);
           });
       }else{
         console.log("Geo plugin not found");
-        deferred.reject();
+        deferred.reject('Plugin not found');
       }
     
     });
@@ -389,9 +441,12 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
   }
 
   return {
+    currentCoords: currentCoords,
+    regionCoords: regionCoords,
     initBackgroundLocation: initBackgroundLocation,
     configureGeofence: configureGeofence,
-    getCurrentPosition: getCurrentPosition
+    getCurrentPosition: getCurrentPosition,
+    getDistance: getDistance
   }
 })
 
@@ -427,13 +482,16 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
 
 .controller('PermissionsController', function($scope, $state, $window, $ionicPlatform, GeoService){
   permissionsGranted = 0;
+  $scope.geoPermissionsReqVisible = true;
+  $scope.pushPermissionsReqVisible = false;
   
   function requestGeoPermissions(){
     $ionicPlatform.ready(function(){
       GeoService.initBackgroundLocation()
         .then(function(){
           permissionsGranted += 1;
-          shouldProceed();    
+          $scope.geoPermissionsReqVisible = false;
+          $scope.pushPermissionsReqVisible = true;
         });
     });
 
@@ -446,12 +504,12 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
           $window.cordova.plugins.notification.local.registerPermission(function (granted) {
             console.log('Permission has been granted: ' + granted);
             permissionsGranted += 1;
+            shouldProceed();
           });
       }else{
           console.log("missing local notification plugin");
       }
 
-      shouldProceed();
     });
   }
   $scope.requestPushPermissions = requestPushPermissions; 
@@ -510,6 +568,7 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
   console.log('=============================================');
   console.log('PrimeController');
 
+  var CONST = 1.75;
   var DELAY = 1000; //ms
   var RADIUS = 50; //m
   var WAIT = 2; // hrs
@@ -521,12 +580,42 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
   $scope.study;
   $scope.condition;
 
-  // DEBUG VALUES
   $scope.DEBUG = true;
-  $scope.currentCoords = {lat:0, lng:0};
-  $scope.regionCoords = {lat:0, lng:0};
+  $scope.currentCoords = GeoService.currentCoords;
+  $scope.regionCoords = GeoService.regionCoords;
   $scope.dist = 0;
   $scope.radius = RADIUS;
+
+
+  // watchers
+  $scope.$watch('currentCoords', function() {
+    updateOnCoordChange();
+  });
+  $scope.$watch('regionCoords', function() {
+    updateOnCoordChange();
+  });
+
+  function updateOnCoordChange(){
+    // run this on var changes to see if regions overlap 
+
+    // figure out if we are in the region of interest
+    var dist = GeoService.getDistance($scope.currentCoords.lat, $scope.currentCoords.lng, $scope.regionCoords.lat, $scope.regionCoords.lng);
+    $scope.dist = dist;
+
+    // get last time the coupon was viewed
+    var now = new Date();
+    var lastTimestamp = new Date( localStorageService.get('last', 0) );
+
+    if(dist <= CONST*RADIUS && WAIT <= diff2Dates(now, lastTimestamp) ){
+      // console.log("In the region");
+      // proceed if in region
+      $scope.inRegion = true;
+    }else{
+      // console.log("out of region");
+      $scope.inRegion = false;
+    }
+    checkActionBtnState();
+  }
 
   
   $scope.isDisabled = true;
@@ -554,44 +643,7 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
   }
   $scope.reset = reset;
 
-
-  function getCoords(){
-    // console.log('getcoords')
-    var deferred = $q.defer();
-    $ionicPlatform.ready(function(){
-      GeoService.getCurrentPosition()
-      .then(function(location){
-        // console.log(location);
-        deferred.resolve({
-          lat: location.coords.latitude,
-          lng: location.coords.longitude
-        });
-      })
-      .catch(function(err){
-        // console.log(err);
-        deferred.resolve({"lat":40.740999620828084,"lng":-74.00181926300179});
-      });
-    });
-    
-    return deferred.promise;
-  }
-
-  function getDistance(lat1,lon1,lat2,lon2) {
-    var R = 6371; // Radius of the earth in km
-    var dLat = deg2rad(lat2-lat1);  // deg2rad below
-    var dLon = deg2rad(lon2-lon1); 
-    var a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-            Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * 
-            Math.sin(dLon/2) * Math.sin(dLon/2);
-    var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
-    var d = R * c * 1000; // Distance in m
-
-    return d;
-  }
-
-  function deg2rad(deg) {
-    return deg * (Math.PI/180)
-  }
+  
 
   function diff2Dates(d1, d2){
     // returns in hours
@@ -632,12 +684,12 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
       });
   }
 
-  function poll(){
-    $timeout(function(){
-      monitorPosition();
-      poll();
-    }, DELAY);
-  }
+  // function poll(){
+  //   $timeout(function(){
+  //     monitorPosition();
+  //     poll();
+  //   }, DELAY);
+  // }
 
 
   function sync(){
@@ -662,7 +714,7 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
             console.log("Got the condition");
             $scope.condition = r;
             
-            poll();
+            // poll();
 
           })
           .catch(function(e){
