@@ -3,7 +3,7 @@
 // angular.module is a global place for creating, registering and retrieving Angular modules
 // 'starter' is the name of this angular module example (also set in a <body> attribute in index.html)
 // the 2nd parameter is an array of 'requires'
-angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
+angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospaced.qrcode'])
 
 
 
@@ -570,55 +570,54 @@ angular.module('relish', ['ionic', 'LocalStorageModule', 'monospaced.qrcode'])
   
   $ionicPlatform.ready(function() {
 
-    try {
+    document.addEventListener("deviceready", function(){
+      
+      try {
 
-      if( navigator.geolocation ){
+        if( navigator.geolocation ){
 
-        // if watchId exists, clear It
-        if(watchId){
-          navigator.geolocation.clearWatch(watchId);
+          // if watchId exists, clear It
+          if(watchId){
+            navigator.geolocation.clearWatch(watchId);
+          }
+
+          watchId = navigator.geolocation.watchPosition(function(position){
+            
+            $scope.currentCoords = {
+              lat: position.coords.latitude,
+              lng: position.coords.longitude
+            };
+            
+            console.log("================>navigator.geolocation.watchPosition<================");
+            console.log($scope.currentCoords);
+            console.log("================>/navigator.geolocation.watchPosition<================");
+
+            $scope.$apply();
+
+          }, function(e){
+            console.log(e);
+
+          }, { maximumAge: 3000, timeout: 5000, enableHighAccuracy: true });
+        }else{
+          console.log("Cannot find navigator");
         }
 
-        watchId = navigator.geolocation.watchPosition(function(position){
-          
-          $scope.currentCoords = {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude
-          };
-          
-          console.log("================>navigator.geolocation.watchPosition<================");
-          console.log($scope.currentCoords);
-          console.log("================>/navigator.geolocation.watchPosition<================");
 
-          $scope.$apply();
-
-        }, function(e){
-          console.log(e);
-
-        }, { maximumAge: 3000, timeout: 5000, enableHighAccuracy: true });
-      }else{
-        console.log("Cannot find navigator");
+      } catch (error) {
+        console.log("There was an error");
+        console.log(error);
       }
-
-
-    } catch (error) {
-      console.log("There was an error");
-      console.log(error);
-    }
+  
+    }, false);
+    
 
   });
 
   $scope.$on("$ionicView.enter", function(event, data){
     // handle event
     console.log('=============$ionicView.enter==================');
-    GeoService.initBackgroundLocation()
-      .then(function(){
-        sync();
-        checkActionBtnState();
-      })
-      .catch(function(e){
-        console.log("there was an issue starting up");
-      });
+    sync();
+    checkActionBtnState();
     console.log('============/$ionicView.enter==================');
     
   });
