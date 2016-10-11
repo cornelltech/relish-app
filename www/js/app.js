@@ -326,25 +326,6 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
     $ionicPlatform.ready(function(){
       if($window.BackgroundGeolocation){
         bg = $window.BackgroundGeolocation;
-
-        // Listen to location event
-        bg.on('location', function(location, taskId){
-          var coords = location.coords;
-          var lat    = coords.latitude;
-          var lng    = coords.longitude;
-
-          // currentCoords.lat = lat;
-          // currentCoords.lng = lng;
-
-          // console.log("================>bg.on:location<================");
-          // console.log(currentCoords);
-          // console.log("================>bg.on:location<================");
-
-          bg.finish(taskId);
-        }, function(e){
-          console.log(e);
-        });
-
         // configure and start the plugin
         bg.configure(options, function(state) {
           // Plugin is configured and ready to use.
@@ -355,7 +336,7 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
         });
 
       }else{
-        console.log("Cant find plugin");
+        console.log("initBackgroundLocation() Plugin not found");
         deferred.reject();
       }
       
@@ -366,7 +347,7 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
   }
 
   function getCurrentPosition(){
-    console.log("================>getCurrentPosition<================");
+    // console.log("================>getCurrentPosition<================");
     // var deferred = $q.defer();
     
     $ionicPlatform.ready(function(){
@@ -382,9 +363,12 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
             currentCoords.lat = lat;
             currentCoords.lng = lng;
 
+            // deferred.resolve(currentCoords);
             bg.finish(taskId);
+
         }, function(errorCode) {
             console.log('An location error occurred: ' + errorCode);
+            // deferred.reject();
         });
         
       }
@@ -402,95 +386,81 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
     //   latitude: 45.5248868,
     //   longitude:  -73.6424362
     // }
-    
-    var deferred = $q.defer();
+    console.log("================>configureGeofence<================");
 
     $ionicPlatform.ready(function() {
       if($window.BackgroundGeolocation){
         
-        bg = $window.BackgroundGeolocation;        
-        bg.configure(options, function(state) {
+        bg = $window.BackgroundGeolocation;
+        // set event listener
+        bg.onGeofence(function(geofence, taskId) {
+          try {
+            var identifier = geofence.identifier;
+            var action     = geofence.action;
+            var location   = geofence.location;
 
-          // set event listener
-          bg.onGeofence(function(geofence, taskId) {
-            try {
-              var identifier = geofence.identifier;
-              var action     = geofence.action;
-              var location   = geofence.location;
+            console.log("- A Geofence transition occurred");
+            console.log("  identifier: ", identifier);
+            console.log("  action: ", action);
+            console.log("  location: ", JSON.stringify(location));
 
-              console.log("- A Geofence transition occurred");
-              console.log("  identifier: ", identifier);
-              console.log("  action: ", action);
-              console.log("  location: ", JSON.stringify(location));
+            // generate a notification
+            // $cordovaLocalNotification.clearAll();
 
-              // generate a notification
-              // $cordovaLocalNotification.clearAll();
-
-              $cordovaLocalNotification.schedule({
-                text: "Congrats, there is a deal availible!"
-              }).then(function(r){
-                
-                console.log("notification Success")
-                console.log(JSON.stringify(r));
-                bg.finish(taskId);
-
-              }).catch(function(e){
-                
-                console.log("notification Error")
-                console.log(JSON.stringify(e));
-                bg.finish(taskId);
-
-              });
-
-            } catch(e) {
-              console.error("An error occurred in my code!", e);
+            $cordovaLocalNotification.schedule({
+              text: "Congrats, there is a deal availible!"
+            }).then(function(r){
+              console.log("notification Success")
               bg.finish(taskId);
-            }
+            }).catch(function(e){
+              console.log("notification Error")
+              console.log(JSON.stringify(e));
+              bg.finish(taskId);
+            });
 
-          });
-          
-          // query for all geofences
-          bg.getGeofences(function(geofences) {
-            for (var n=0,len=geofences.length;n<len;n++) {
-                var geofence = geofences[n];
-                console.log('--->Geofence');
-                console.log(geofence);
-            }
-          });
-
-          // bg.removeGeofence(options.identifier);
-
-          bg.addGeofence({
-              identifier: options.identifier,
-              radius: options.radius,
-              latitude: options.latitude,
-              longitude: options.longitude,
-              notifyOnEntry: true
-          }, function() {
-              console.log("Successfully added geofence");
-
-              if(!state.enabled){
-                bg.start();
-              }
-              deferred.resolve();
-              
-              
-          }, function(error) {
-              console.warn("Failed to add geofence", error);
-              deferred.reject();
-          });
+          } catch(e) {
+            console.error("An error occurred in my code!", e);
+            bg.finish(taskId);
+          }
 
         });
 
+        // query for all geofences
+        bg.getGeofences(function(geofences) {
+          for (var n=0,len=geofences.length;n<len;n++) {
+              var geofence = geofences[n];
+              console.log('--->Geofence');
+              console.log(geofence);
+          }
+        });
 
+        // bg.removeGeofence(options.identifier);
+
+        bg.addGeofence({
+            identifier: options.identifier,
+            radius: options.radius,
+            latitude: options.latitude,
+            longitude: options.longitude,
+            notifyOnEntry: true
+        }, function() {
+            console.log("Successfully added geofence");            
+        }, function(error) {
+            console.warn("Failed to add geofence", error);
+            deferred.reject();
+        });
+
+        bg.configure(options, function(state) {
+          // Plugin is configured and ready to use.
+          if (!state.enabled) {
+            bg.start();
+          }
+        });
 
       }else{
         console.log("Cant find plugin");
-        deferred.reject();
       }
     });
-
-    return deferred.promise;
+    console.log("================>/configureGeofence<================");
   }
 
   return {
@@ -590,13 +560,16 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
 
   QuestionService.loadQuestions()
     .then(function(qs){
-      console.log(qs);
+      // if no questions, then skip
+      if( qs.length == 0 ){ $state.go('prime'); }
+
       $scope.questions = qs;
       $scope.questions.forEach(function(q){ $scope.answers.push(""); });
     })
     .catch(function(error){
       console.log(error);
-      alert("Failed to load questions");
+      // if no questions, then skip
+      if( qs.length == 0 ){ $state.go('prime'); }
     });
   
   function submitAnswer(questionIndx){
@@ -643,7 +616,7 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
   
   
   function pollCoords(){
-    console.log("POLL");
+    // console.log("POLL");
     
     GeoService.getCurrentPosition();
     $scope.currentCoords = GeoService.currentCoords; 
@@ -759,5 +732,7 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
   
 
 })
+
+.controller('CouponController', function($scope){})
 
 .controller('SettingsController', function($scope){})
