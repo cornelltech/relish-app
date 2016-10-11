@@ -5,12 +5,7 @@
 // the 2nd parameter is an array of 'requires'
 angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospaced.qrcode'])
 
-
-
-// .constant('DOMAIN', 'https://e3b157ca.ngrok.io/api/v1')
 .constant('DOMAIN', 'http://ec2-54-152-205-200.compute-1.amazonaws.com/api/v1')
-
-
 
 .run(function($rootScope, $window, $ionicLoading, $ionicPlatform, $urlRouter, $state, ParticipantService) {
   $ionicPlatform.ready(function() {
@@ -56,8 +51,6 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
 
 
 })
-
-
 
 .config(function(localStorageServiceProvider) {
   localStorageServiceProvider.setPrefix('relish');
@@ -105,10 +98,14 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
       url: '/prime',
       templateUrl: 'templates/prime.html',
       controller: 'PrimeController' 
+    })
+
+    .state('coupon', {
+      url: '/coupon',
+      templateUrl: 'templates/coupon.html',
+      controller: 'CouponController' 
     });
 })
-
-
 
 .service('ParticipantService', function($q, $http, localStorageService, DOMAIN){
   function getToken(){
@@ -205,16 +202,12 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
     }).then(function(r){
       r.data.results.forEach(function(obj){
         if(obj.active){
-          
-          console.log("================>StudyService.loadStudies<================");
-          // console.log(obj);
-          console.log("================>/StudyService.loadStudies<================");
-
+          // grabs the first study which is active
           deferred.resolve(obj);
-
         }
       });
-      // deferred.reject( );
+      // nothing returns
+      deferred.resolve(undefined);
     }).catch(function(e){
       deferred.reject(e);
     });
@@ -226,12 +219,21 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
     var deferred = $q.defer();
     var condition = undefined;
     var lastCondition = undefined;
+
+    // check if a last accessed timestamp exists, if not set it to epoch
+    var timestamp_raw = localStorageService.get('lastConditionAccessTimestamp', 0);
+    if( !timestamp_raw ){ 
+      timestamp_raw = 0; 
+      var epoch = new Date(timestamp_raw);
+      localStorageService.set('lastConditionAccessTimestamp', epoch.getTime().toString());
+    }
+    var timestamp = new Date(parseInt(timestamp_raw));
     
     // get the id of the last condition used
-    var lastConditionId = localStorageService.get('lastCondition', -1);
+    var lastConditionId = localStorageService.get('lastCondition');
 
-    // if nothing is used, get the first one
     if( lastConditionId == null ){
+      // if nothing is used, get the first one
       lastCondition = conditions[0];
     }else {
       lastCondition = conditions.find(function(obj, indx){
@@ -242,23 +244,41 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
       }
     }
 
-    // get the next condition in the list
-    conditions.forEach(function(obj, indx){
-      if(lastCondition.id == obj.id){
-        if(indx == conditions.length - 1){
-          condition = conditions[0];
-        }else{
-          condition = conditions[indx + 1];
+
+    // if the condition was used today, show it again. if its another day, show a new one
+    var oneDay = 24*60*60*1000; // hours*minutes*seconds*milliseconds
+    var now = new Date();
+    // we dont care about these units
+    now.setSeconds(0);
+    now.setMinutes(0);
+    now.setHours(0);
+  
+    var time_since_in_days = Math.round(Math.abs((now.getTime() - timestamp.getTime())/(oneDay)));
+    
+    if( time_since_in_days > 0 ){
+      // more than a day has passed, so grab the next one
+      // grab the next condition in a round robin style
+      conditions.forEach(function(obj, indx){
+        if(lastCondition.id == obj.id){
+          if(indx == conditions.length - 1){
+            condition = conditions[0];
+          }else{
+            condition = conditions[indx + 1];
+          }
         }
-      }
-    });
+      });
+    }else{
+      // access the same day, so return the condition
+      condition = lastCondition;
+    }
 
-    // cache
+    // cache for next time
     localStorageService.set('lastCondition', condition.id);
+    // add a timestamp to the time we accessed this
+    localStorageService.set('lastConditionAccessTimestamp', now.getTime().toString());
 
-    console.log("================>StudyService.getCondition<================");
-    // console.log(condition);
-    console.log("================>/StudyService.getCondition<================");
+    console.log("getCondition()");
+    console.log(condition);
 
     deferred.resolve(condition);
 
