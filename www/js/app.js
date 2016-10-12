@@ -291,7 +291,7 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
   }
 })
 
-.service('GeoService', function($q, $rootScope, $window, $ionicPlatform, $cordovaLocalNotification){
+.service('GeoService', function($q, $rootScope, $window, $ionicPlatform, $cordovaLocalNotification, localStorageService){
   var bg = null;
   var currentCoords = {lat: 90, lng: 180};
 
@@ -301,6 +301,48 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
     stopOnTerminate: false,
     startOnBoot: true
   };
+
+  function updateGeofenceTransitionTimestamp(){
+    var n = new Date();
+    localStorageService.set('geofenceTransitionTimestamp', n.getTime().toString());
+  }
+  function getGeofenceTransitionTimestamp(){
+    var t = localStorageService.get('geofenceTransitionTimestamp');
+    if(t){
+      return new Date( parseInt(t) );
+    }else{
+      return new Date(0);
+    }
+  }
+  function updateNotificationTimestamp(){
+    var n = new Date();
+    localStorageService.set('notificationTimestamp', n.getTime().toString());
+  }
+  function getnotificationTimestamp(){
+    var t = localStorageService.get('notificationTimestamp');
+    if(t){
+      return new Date( parseInt(t) );
+    }else{
+      return new Date(0);
+    }
+  }
+
+  function generateNotification(){
+    var deferred = $q.defer();
+    
+    $cordovaLocalNotification.schedule({
+        text: "Congrats, there is a deal availible!"
+      }).then(function(r){
+        updateNotificationTimestamp();
+        deferred.resolve();
+      }).catch(function(e){
+        console.log(JSON.stringify(e));
+        deferred.reject(e);
+      });
+    
+    return deferred.promise;
+  }
+  
 
   function getDistance(lat1,lon1,lat2,lon2) {
     var R = 6371; // Radius of the earth in km
@@ -347,9 +389,6 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
   }
 
   function getCurrentPosition(){
-    // console.log("================>getCurrentPosition<================");
-    // var deferred = $q.defer();
-    
     $ionicPlatform.ready(function(){
       if($window.BackgroundGeolocation){
         bg = $window.BackgroundGeolocation;
@@ -363,18 +402,13 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
             currentCoords.lat = lat;
             currentCoords.lng = lng;
 
-            // deferred.resolve(currentCoords);
             bg.finish(taskId);
 
         }, function(errorCode) {
             console.log('An location error occurred: ' + errorCode);
-            // deferred.reject();
-        });
-        
+        });       
       }
     });
-    
-    // return deferred.promise;
   }
 
   function configureGeofence(options){
@@ -404,19 +438,13 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
             console.log("  action: ", action);
             console.log("  location: ", JSON.stringify(location));
 
-            // generate a notification
-            // $cordovaLocalNotification.clearAll();
+            updateGeofenceTransitionTimestamp();
 
-            $cordovaLocalNotification.schedule({
-              text: "Congrats, there is a deal availible!"
-            }).then(function(r){
-              console.log("notification Success")
-              bg.finish(taskId);
-            }).catch(function(e){
-              console.log("notification Error")
-              console.log(JSON.stringify(e));
-              bg.finish(taskId);
-            });
+            // generate a notification
+            generateNotification()
+              .done(function(){
+                bg.finish(taskId);    
+              });
 
           } catch(e) {
             console.error("An error occurred in my code!", e);
@@ -435,7 +463,6 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
         });
 
         // bg.removeGeofence(options.identifier);
-
         bg.addGeofence({
             identifier: options.identifier,
             radius: options.radius,
@@ -637,11 +664,7 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
       var dist = GeoService.getDistance($scope.currentCoords.lat, $scope.currentCoords.lng, $scope.regionCoords.lat, $scope.regionCoords.lng);
       $scope.dist = dist;
 
-      // get last time the coupon was viewed
-      var now = new Date();
-      var lastTimestamp = new Date( localStorageService.get('last', 0) );
-
-      if(dist <= CONST*RADIUS && WAIT <= diff2Dates(now, lastTimestamp) ){
+      if( dist <= CONST*RADIUS ){
         // proceed if in region
         $scope.inRegion = true;
       }else{
