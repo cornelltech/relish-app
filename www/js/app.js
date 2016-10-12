@@ -606,11 +606,12 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
   $scope.width = 0.85 * $window.innerWidth;
   $scope.isPriming = true;
   $scope.inRegion = false;
+  $scope.state = 2; // 0 - out of region, 1 - too late, 2 - prime
   
   $scope.study;
   $scope.condition;
 
-  $scope.DEBUG = true;
+  $scope.DEBUG = false;
   
   $scope.currentCoords = GeoService.currentCoords;
   

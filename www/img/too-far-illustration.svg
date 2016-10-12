@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="180px" height="264px" viewBox="0 0 180 264" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: sketchtool 40.1 (33804) - http://www.bohemiancoding.com/sketch -->
+    <title>B0128BD8-EBC9-4B17-B8B6-B989F7B0AAA5</title>
+    <desc>Created with sketchtool.</desc>
+    <defs>
+        <path d="M151.763637,186.328589 L152,41.9002981 C151.769805,31.0815489 146.970757,28.1500523 132.913282,16.3711909 C118.855807,4.5923295 117.9924,2.2038199 104.589288,1.456285 L21.009905,0.974636263 C9.96295991,0.910975262 0.953198446,9.81073395 0.885971043,20.8640675 L0,166.532842 L9.40253503,168.604133 C10.4805376,168.841607 11.770141,169.817002 12.2955115,170.806403 L21.9589485,189.005032 L22.0791045,186.193482" id="path-1"></path>
+    </defs>
+    <g id="Relish-App" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="2.-Out-of-Range" transform="translate(-98.000000, -54.000000)">
+            <g id="TooFar-Illustration" transform="translate(98.000000, 53.000000)">
+                <ellipse id="Shadow" fill-opacity="0.05" fill="#000000" cx="90" cy="253.5" rx="90" ry="11.5"></ellipse>
+                <g id="Bag" transform="translate(14.000000, 0.500266)">
+                    <g id="Group-2">
+                        <mask id="mask-2" fill="white">
+                            <use xlink:href="#path-1"></use>
+                        </mask>
+                        <use id="Rectangle-4" fill="#F0E698" xlink:href="#path-1"></use>
+                        <g id="Crease" mask="url(#mask-2)" stroke-linecap="round" stroke="#FFF8B8" stroke-width="2" stroke-linejoin="round">
+                            <g transform="translate(5.000000, 23.000000)">
+                                <path d="M6.5,25 L6.5,147.710276" id="Path-2"></path>
+                                <polyline id="Triangle-2" transform="translate(6.500000, 12.500000) rotate(-180.000000) translate(-6.500000, -12.500000) " points="0.556821132 14.411909 6.43467886 0.438829787 12.4431789 24.5611702"></polyline>
+                            </g>
+                        </g>
+                    </g>
+                    <path d="M22,189 L24.5,186.496296 L26.9673528,188.974532 M22,189 L22,41.9989298 C22,30.9538259 30.9610562,22 41.9920941,22 L132.007906,22 C143.049235,22 152,30.9491035 152,41.9989298 L152,189 M152,189 L149.5,186.496296 L147,189 M27,189 L29.5,186.496296 L32,189 M32,189 L34.5,186.496296 L37,189 M37,189 L39.5,186.496296 L42,189 M42,189 L44.5,186.496296 L47,189 M47,189 L49.5,186.496296 L52,189 M52,189 L54.5,186.496296 L57,189 M57,189 L59.5,186.496296 L62,189 M67,189 L69.5,186.496296 L72,189 M62,189 L64.5,186.496296 L67,189 M72,189 L74.5,186.496296 L77,189 M77,189 L79.5,186.496296 L82,189 M82,189 L84.5,186.496296 L87,189 M87,189 L89.5,186.496296 L92,189 M92,189 L94.5,186.496296 L97,189 M97,189 L99.5,186.496296 L102,189 M102,189 L104.5,186.496296 L107,189 M107,189 L109.5,186.496296 L112,189 M112,189 L114.5,186.496296 L117,189 M117,189 L119.5,186.496296 L122,189 M122,189 L124.5,186.496296 L127,189 M127,189 L129.5,186.496296 L132,189 M137,189 L139.5,186.496296 L142,189 M132,189 L134.5,186.496296 L137,189 M142,189 L144.5,186.496296 L147,189" id="Combined-Shape" fill="#FFF8B8" style="mix-blend-mode: lighten;"></path>
+                    <text id="THANK-YOU" transform="translate(85.500000, 102.499734) rotate(-180.000000) translate(-85.500000, -102.499734) " font-family="Asap-Bold, Asap" font-size="22" font-weight="bold" letter-spacing="3.30000019" fill="#A99506">
+                        <tspan x="42.1599995" y="97.4997342">THANK </tspan>
+                        <tspan x="58.5279997" y="123.499734">YOU</tspan>
+                    </text>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

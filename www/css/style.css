@@ -117,11 +117,19 @@ ion-view{
   width: 100vw;
   height: 100vw;
   background-color: #33cd5f;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }
 .study .study-content .study-img img{
-  width: 100vw;
-  height: 100vw;
+  height: 80%;
 }
+.study .study-content .study-img .prime-img{
+  height: 100vw;
+  width: 100vw;
+}
+
 .study .study-content .study-img qrcode canvas{
   /*width: 100vw;
   height: 100vw;*/
