@@ -603,10 +603,9 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
   var RADIUS = 100; //m
   var WAIT = 2; // hrs
 
-  $scope.width = 0.85 * $window.innerWidth;
   $scope.isPriming = true;
   $scope.inRegion = false;
-  $scope.state = 2; // 0 - out of region, 1 - too late, 2 - prime
+  $scope.state = 0; // 0 - out of region, 1 - too late, 2 - prime
   
   $scope.study;
   $scope.condition;

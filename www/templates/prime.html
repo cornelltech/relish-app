@@ -5,15 +5,17 @@
         
         <div class="study">
             <div class="study-content">
+                
                 <!--Image-->
                 <div class="study-img">
                     <img ng-show="state == 0" src="img/too-far-illustration.svg" />
                     <img ng-show="state == 1" ng-src="img/too-late-illustration.svg" />
                     <img class="prime-img" ng-show="state == 2" ng-src="{{condition.primer.image}}" />
                 </div>
+                
                 <!--Action Button-->
                 <div class="study-action padding">
-                    <button ng-disabled="isDisabled" 
+                    <button ng-disabled="state != 2" 
                             ng-click="showCoupon()" 
                             class="button button-block button-balanced animated bounceIn">
                         <span ng-show="state == 0">TOO FAR</span>
@@ -21,16 +23,28 @@
                         <span ng-show="state == 2">RELISH IT</span>
                     </button>
                 </div>
+
                 <!--Text-->
                 <div class="study-text-content">
-                    <div class="study-title padding">
-                        <p ng-show="!inRegion">Nothing to Relish</p>
-                        <p ng-show="inRegion">{{condition.primer.title}}</p>
-                    </div>
                     <div class="study-text padding">
-                        <p ng-show="!inRegion">You are currently not within proximity of any participating venues or have already claimed your coupon</p>
-                        <p ng-show="inRegion">{{condition.primer.description}}</p>
+
+                        <div ng-show="state == 0">
+                            <h3>Gotta be faster</h3>
+                            <p>There’s a 5 minute window in which you need to claim your coupon.</p>
+                        </div>
+
+                        <div ng-show="state == 1">
+                            <h3>Gotta be faster</h3>
+                            <p>There’s a 5 minute window in which you need to claim your coupon.</p>
+                        </div>
+
+                        <div ng-show="state == 2">
+                            <h3>{{condition.primer.title}}</h3>
+                            <p>{{condition.primer.description}}</p>
+                        </div>
+
                     </div>
+
                 </div>
             </div>
         </div>
