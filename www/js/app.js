@@ -651,8 +651,7 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
       .then(function(study){
         $scope.study = study;
         console.log(study)
-        // $scope.regionCoords = {lat: study.region.lat, lng: study.region.lng};
-        
+    
         // console.log($scope.study.region)
         $scope.study.regions.forEach(function(region){
           GeoService.configureGeofence({
