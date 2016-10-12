@@ -442,7 +442,7 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
 
             // generate a notification
             generateNotification()
-              .done(function(){
+              .finally(function(){
                 bg.finish(taskId);    
               });
 
@@ -455,6 +455,7 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
 
         // query for all geofences
         bg.getGeofences(function(geofences) {
+          console.log("fetching all the geofences");
           for (var n=0,len=geofences.length;n<len;n++) {
               var geofence = geofences[n];
               console.log('--->Geofence');
