@@ -639,96 +639,32 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
   $scope.condition;
 
   $scope.DEBUG = false;
-  
+    
   $scope.currentCoords = GeoService.currentCoords;
-  
-  
-  function pollCoords(){
-    // console.log("POLL");
-    
-    GeoService.getCurrentPosition();
-    $scope.currentCoords = GeoService.currentCoords; 
-    updateOnCoordChange();
-    
-    $timeout(pollCoords, 2000);
-  }
-  
+
   $scope.regionCoords = {lat: 0, lng: 0};
   $scope.dist = 0;
   $scope.radius = RADIUS;  
-
-  function updateOnCoordChange(){
-    // run this on var changes to see if regions overlap 
-
-    try {
-      // figure out if we are in the region of interest
-      var dist = GeoService.getDistance($scope.currentCoords.lat, $scope.currentCoords.lng, $scope.regionCoords.lat, $scope.regionCoords.lng);
-      $scope.dist = dist;
-
-      if( dist <= CONST*RADIUS ){
-        // proceed if in region
-        $scope.inRegion = true;
-      }else{
-        // not in region
-        $scope.inRegion = false;
-      }
-      checkActionBtnState();  
-    } catch (error) {
-      console.log("Error")
-      console.log(error)
-    }
-    
-  }
-
   
-  $scope.isDisabled = true;
-  function checkActionBtnState(){
-    if($scope.inRegion){
-      $timeout(function(){
-        $scope.isDisabled = false;
-      }, DELAY);
-    }else{
-      $scope.isDisabled = true;
-    }
-  }
-
-  function showCoupon(){
-    $scope.isPriming = false;
-  }
-  $scope.showCoupon = showCoupon;
-
-  function reset(){
-    $scope.inRegion = false;
-    $scope.isPriming = true;
-    checkActionBtnState();
-    var now = new Date();
-    localStorageService.set('last', now.toString());
-  }
-  $scope.reset = reset;
-
-  
-  function diff2Dates(d1, d2){
-    // returns in hours
-    var timeDiff = Math.abs(d2.getTime() - d1.getTime());
-    return Math.ceil(timeDiff / (1000 * 3600)); 
-  }
-
   function sync(){
     StudyService.loadStudies()
       .then(function(study){
         $scope.study = study;
-        $scope.regionCoords = {lat: study.region.lat, lng: study.region.lng};
-        updateOnCoordChange();
+        console.log(study)
+        // $scope.regionCoords = {lat: study.region.lat, lng: study.region.lng};
         
-        GeoService.configureGeofence({
-          identifier: $scope.study.region.description,
-          notifyOnEntry: true,
-          notifyOnExit: false,
-          radius: RADIUS,
-          latitude: $scope.study.region.lat,
-          longitude:  $scope.study.region.lng
+        // console.log($scope.study.region)
+        $scope.study.regions.forEach(function(region){
+          GeoService.configureGeofence({
+            identifier: region.description,
+            notifyOnEntry: true,
+            notifyOnExit: false,
+            radius: RADIUS,
+            latitude: region.lat,
+            longitude: region.lng
+          });
         });
-
+        
         StudyService.getCondition($scope.study.conditions)
           .then(function(r){
             $scope.condition = r;
@@ -748,8 +684,7 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
     // handle event
     console.log('=============$ionicView.enter==================');
     sync();
-    checkActionBtnState();
-    pollCoords();
+    GeoService.getCurrentPosition();
     console.log('============/$ionicView.enter==================');
   });
 
