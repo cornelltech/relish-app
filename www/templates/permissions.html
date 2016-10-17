@@ -3,7 +3,9 @@
 
         <div ng-show="geoPermissionsReqVisible">
             <h1 class="title">Location Permissions</h1>
-            <p>Relish needs location permission so that it knows when you are near your food coop. Without this, we will not be able to send you relevent updates when you are nearby.</p>
+            <p>
+                Giving us permission to know your location is essential for this app to do its magic (and give you coupons). Don’t worry -- we’re only using this information so we can send you notifications and coupons just when you’re headed to the store. That’s it!
+            </p>
             <button class="button button-block button-outline button-balanced" 
                     ng-click="requestGeoPermissions()">
                 Ok
@@ -12,7 +14,9 @@
         
         <div ng-show="pushPermissionsReqVisible">
             <h1 class="title">Notification Permissions</h1>
-            <p>Relish needs notification permission so that we can send you updates when you are near your food coop.</p>
+            <p>
+                Giving us permission to send you notifications is essential for this app to do its magic (and give you coupons). Don’t worry -- we’ll only send you notifications when we think you’re headed to the store so you won’t miss out on any available coupons.
+            </p>
             <button class="button button-block button-outline button-balanced" 
                     ng-click="requestPushPermissions()">
                 Ok
