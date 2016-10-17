@@ -15,7 +15,8 @@
                 
                 <!--Action Button-->
                 <div class="study-action padding">
-                    <button ng-disabled="state != 3"
+                    <button ng-disabled="state != 3 || disabledBtn"
+                            ng-click="claim()"
                             class="button button-block button-balanced animated bounceIn">
                         <span ng-show="state == 0">TOO FAR</span>
                         <span ng-show="state == 2">TOO LATE</span>
@@ -40,6 +41,7 @@
                         <div ng-show="state == 3">
                             <h3>{{condition.primer.title}}</h3>
                             <p>{{condition.primer.description}}</p>
+                            <p>Wait five seconds to claim coupon...</p>
                         </div>
 
                     </div>

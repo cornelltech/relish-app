@@ -325,6 +325,7 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
   }
 
   function generateNotification(){
+    console.log("-- GeoService.generateNotification")
     var deferred = $q.defer();
     
     $cordovaLocalNotification.schedule({
@@ -392,7 +393,6 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
         bg = $window.BackgroundGeolocation;
 
         bg.getCurrentPosition(function(location, taskId) {
-
             coords.lat = location.coords.latitude;
             coords.lng = location.coords.longitude;
             
@@ -403,6 +403,9 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
             console.log('An location error occurred: ' + errorCode);
             deferred.reject();
         });       
+      }else{
+        console.log('-- Geoservice.getCurrentPosition: missing plugin')
+        deferred.reject();       
       }
     });
     return deferred.promise;
@@ -484,7 +487,6 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
      getCurrentPosition()
       .then(function(){
         console.log('-- Geoservice.inGeoFenc(): resolved getCurrentPosition')
-
         var flag = false;
         regions.forEach(function(region){
           var d = getDistance(coords.lat, coords.lng, region.lat, region.lng);
@@ -637,16 +639,19 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
   $scope.submitAnswer = submitAnswer;
 })
 
-.controller('PrimeController', function($ionicPlatform, $scope, $state, $q, StudyService, GeoService){
+.controller('PrimeController', function($ionicPlatform, $scope, $timeout, $state, $q, StudyService, GeoService){
   console.log('-- PrimeController');
 
-  var RADIUS = 100; //m 
+  var DELAY = 5000; // ms
+  var RADIUS = 100; // m 
   $scope.state = 0; // 0 - out of region, 1 - in the region, 2 - too late, 3 - prime  
   $scope.study;
   $scope.condition;
+  $scope.disabledBtn = true;
+  
 
   // monitor app states (foreground / background)
-  $ionicPlatform.ready(function() {        
+  $ionicPlatform.ready(function() {
       document.addEventListener("resume", function(){
           console.log("-- ionicPlatform: resume event");
           updateState();
@@ -667,7 +672,10 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
           .finally(function(){
             // then look whether or not we are in time
             syncTime()
-              .finally(function(){
+              .finally(function(){                
+                $timeout(function(){
+                  $scope.disabledBtn = false;
+                }, DELAY);
 
               });
           });
@@ -686,6 +694,9 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
           $scope.state = 0;
         }
         deferred.resolve();
+      })
+      .catch(function(e){
+        deferred.reject(e);
       });
     return deferred.promise;
   }
@@ -758,6 +769,11 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
 
       return deferred.promise;
   }
+
+  function claim(){
+    $state.go('coupon');
+  }
+  $scope.claim = claim;
 
 
 })
