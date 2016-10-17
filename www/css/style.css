@@ -139,3 +139,8 @@ ion-view{
   /*width: 100vw;
   height: 100vw;*/
 }
+
+.coupon-img img{
+  width: 80%;
+  height: initial !important;
+}

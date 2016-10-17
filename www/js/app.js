@@ -492,7 +492,7 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
             flag = true;
            }
         });
-        
+
         deferred.resolve(flag);
       })
       .catch(function(e){
@@ -676,7 +676,7 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
   updateState();
   
   function syncLocation(){
-    console.log('-- syncLocation()');
+    console.log('-- PrimeController.syncLocation');
     var deferred = $q.defer();
     GeoService.inGeoFence($scope.study.regions, RADIUS)
       .then(function(inRegion){
@@ -691,7 +691,7 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
   }
 
   function syncTime(){
-
+    console.log('-- PrimeController.syncTime');
     var deferred = $q.defer();
 
     if( $scope.state == 1){
@@ -721,7 +721,7 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
   }
 
   function syncStudies(){
-    console.log('-- syncStudies()');
+    console.log('-- PrimeController.syncStudies');
     var deferred = $q.defer();
 
     StudyService.loadStudies()
@@ -762,6 +762,34 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
 
 })
 
-.controller('CouponController', function($scope){})
+.controller('CouponController', function($scope, $state, StudyService){
+  $scope.study;
+  $scope.condition;
+
+  StudyService.loadStudies()
+    .then(function(study){
+      $scope.study = study;
+
+      StudyService.getCondition($scope.study.conditions)
+        .then(function(r){
+          $scope.condition = r;
+          console.log($scope.condition);
+        })
+        .catch(function(e){
+          console.log(e);
+        });
+      
+    })
+    .catch(function(e){
+      console.log(e);
+      alert("Failed to syncStudies study");
+    });
+
+  function close(){
+    $state.go('prime');
+  }
+  $scope.close = close;
+
+})
 
 .controller('SettingsController', function($scope){})
