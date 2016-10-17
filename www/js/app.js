@@ -291,9 +291,11 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
   }
 })
 
-.service('GeoService', function($q, $rootScope, $window, $ionicPlatform, $cordovaLocalNotification, localStorageService){
+.service('GeoService', function($q, $rootScope, $window, $timeout, $ionicPlatform, $cordovaLocalNotification, localStorageService){
   var bg = null;
-  var currentCoords = {lat: 90, lng: 180};
+  var coords = {lat: 90, lng: 180};
+  var CONST = 1.75;
+  var DELAY = 1000; //ms
 
   var options = {
     // Application config
@@ -395,13 +397,9 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
 
         bg.getCurrentPosition(function(location, taskId) {
 
-            var coords = location.coords;
-            var lat    = coords.latitude;
-            var lng    = coords.longitude;
-
-            currentCoords.lat = lat;
-            currentCoords.lng = lng;
-
+            coords.lat = location.coords.latitude;
+            coords.lng = location.coords.longitude;
+            
             bg.finish(taskId);
 
         }, function(errorCode) {
@@ -453,16 +451,6 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
 
         });
 
-        // query for all geofences
-        bg.getGeofences(function(geofences) {
-          console.log("fetching all the geofences");
-          for (var n=0,len=geofences.length;n<len;n++) {
-              var geofence = geofences[n];
-              console.log('--->Geofence');
-              console.log(geofence);
-          }
-        });
-
         // bg.removeGeofence(options.identifier);
         bg.addGeofence({
             identifier: options.identifier,
@@ -491,12 +479,37 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
     console.log("================>/configureGeofence<================");
   }
 
+  function inGeoFence(regions, radius){
+     var deferred = $q.defer();
+     
+     // this is janky...
+     getCurrentPosition();
+
+     $timeout(function(){
+       console.log("current coords:");
+       console.log(coords);
+       var flag = false;
+       regions.forEach(function(region){
+         var d = getDistance(coords.lat,coords.lon,region.lat,region.lon);
+         if( d <= radius * CONST){
+           flag = true;
+         }
+       });
+       deferred.resolve(flag);
+     }, 1000);
+
+     return deferred.promise;
+  }
+
   return {
-    currentCoords: currentCoords,
+    coords: coords,
     initBackgroundLocation: initBackgroundLocation,
     getCurrentPosition: getCurrentPosition,
     configureGeofence: configureGeofence,
-    getDistance: getDistance
+    getDistance: getDistance,
+    getGeofenceTransitionTimestamp: getGeofenceTransitionTimestamp,
+    getnotificationTimestamp: getnotificationTimestamp,
+    inGeoFence: inGeoFence
   }
 })
 
@@ -622,37 +635,67 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
   $scope.submitAnswer = submitAnswer;
 })
 
-.controller('PrimeController', function($scope, $state, $q, $window, $timeout, $ionicPlatform, $cordovaLocalNotification, localStorageService, StudyService, GeoService){
+.controller('PrimeController', function($scope, $state, $q, $window, $timeout, localStorageService, StudyService, GeoService){
   console.log('=============================================');
   console.log('PrimeController');
+  var RADIUS = 100; //m 
 
-  var CONST = 1.75;
-  var DELAY = 1000; //ms
-  var RADIUS = 100; //m
-  var WAIT = 2; // hrs
 
-  $scope.isPriming = true;
-  $scope.inRegion = false;
-  $scope.state = 0; // 0 - out of region, 1 - too late, 2 - prime
-  
+  $scope.state = 0; // 0 - out of region, 1 - in the region, 2 - too late, 3 - prime  
   $scope.study;
   $scope.condition;
-
-  $scope.DEBUG = false;
-    
-  $scope.currentCoords = GeoService.currentCoords;
-
-  $scope.regionCoords = {lat: 0, lng: 0};
-  $scope.dist = 0;
-  $scope.radius = RADIUS;  
   
-  function sync(){
+  function syncTime(){
+
+    var deferred = $q.defer();
+
+    if( $scope.state == 1){
+      var window = 5; // mins
+      var notificationTime = GeoService.getnotificationTimestamp();
+
+      var oneMin = 60*1000; // seconds*milliseconds
+      var now = new Date();
+      var time_since_in_minutes = Math.round(Math.abs((now.getTime() - notificationTime.getTime())/(oneMin)));
+
+      var mins_in_a_day = 1440;
+
+      if( time_since_in_minutes <= 5 || time_since_in_minutes >= mins_in_a_day){
+        $scope.state = 3;
+      }else{
+        // too late
+        $scope.state = 1;
+      }
+      
+      deferred.resolve();
+
+    }else{
+      deferred.resolve();
+    }
+
+    return deferred.promise;
+  }
+
+  function syncLocation(){
+    var deferred = $q.defer();
+    GeoService.inGeoFence($scope.study.regions, RADIUS)
+      .then(function(inRegion){
+        if(inRegion){
+          $scope.state = 1;
+        }else{
+          $scope.state = 0;
+        }
+        deferred.resolve();
+      });
+    return deferred.promise;
+  }
+
+  function syncStudies(){
+    var deferred = $q.defer();
+
     StudyService.loadStudies()
       .then(function(study){
         $scope.study = study;
-        console.log(study)
-    
-        // console.log($scope.study.region)
+
         $scope.study.regions.forEach(function(region){
           GeoService.configureGeofence({
             identifier: region.description,
@@ -667,23 +710,48 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
         StudyService.getCondition($scope.study.conditions)
           .then(function(r){
             $scope.condition = r;
+            deferred.resolve();
           })
           .catch(function(e){
             console.log(e);
+            deferred.reject();
           });
         
       })
       .catch(function(e){
         console.log(e);
-        alert("Failed to sync study");
+        alert("Failed to syncStudies study");
+        deferred.reject();
       });
+
+      return deferred.promise;
   }
 
   $scope.$on("$ionicView.enter", function(event, data){
+
     // handle event
     console.log('=============$ionicView.enter==================');
-    sync();
-    GeoService.getCurrentPosition();
+    
+    // if it clears, show the prime
+    console.log("syncing study");
+    syncStudies()
+      .then(function(){
+        // first lets see if we are inside the fence
+        console.log("syncing location");
+        syncLocation()
+          .finally(function(){
+            // then look whether or not we are in time
+            console.log("syncing timestamp");
+            syncTime()
+              .finally(function(){
+
+              });
+          });
+      })
+      .catch(function(e){
+        alert("Something broke");
+      });
+
     console.log('============/$ionicView.enter==================');
   });
 

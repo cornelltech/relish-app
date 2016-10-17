@@ -9,18 +9,17 @@
                 <!--Image-->
                 <div class="study-img">
                     <img ng-show="state == 0" src="img/too-far-illustration.svg" />
-                    <img ng-show="state == 1" ng-src="img/too-late-illustration.svg" />
-                    <img class="prime-img" ng-show="state == 2" ng-src="{{condition.primer.image}}" />
+                    <img ng-show="state == 2" ng-src="img/too-late-illustration.svg" />
+                    <img class="prime-img" ng-show="state == 3" ng-src="{{condition.primer.image}}" />
                 </div>
                 
                 <!--Action Button-->
                 <div class="study-action padding">
-                    <button ng-disabled="state != 2" 
-                            ng-click="showCoupon()" 
+                    <button ng-disabled="state != 3"
                             class="button button-block button-balanced animated bounceIn">
                         <span ng-show="state == 0">TOO FAR</span>
-                        <span ng-show="state == 1">TOO LATE</span>
-                        <span ng-show="state == 2">RELISH IT</span>
+                        <span ng-show="state == 2">TOO LATE</span>
+                        <span ng-show="state == 3">RELISH IT</span>
                     </button>
                 </div>
 
@@ -33,12 +32,12 @@
                             <p>You are currently too far from a participating store. We’ll notify you when you’re closer.</p>
                         </div>
 
-                        <div ng-show="state == 1">
+                        <div ng-show="state == 2">
                             <h3>Gotta be faster</h3>
                             <p>There’s a 5 minute window in which you need to claim your coupon. Try again next time!</p>
                         </div>
 
-                        <div ng-show="state == 2">
+                        <div ng-show="state == 3">
                             <h3>{{condition.primer.title}}</h3>
                             <p>{{condition.primer.description}}</p>
                         </div>
