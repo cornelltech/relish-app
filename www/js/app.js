@@ -327,16 +327,31 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
   function generateNotification(){
     console.log("-- GeoService.generateNotification")
     var deferred = $q.defer();
+    var now = new Date();
+    var last = getnotificationTimestamp();
     
-    $cordovaLocalNotification.schedule({
-        text: "Congrats, there is a deal availible!"
-      }).then(function(r){
-        updateNotificationTimestamp();
-        deferred.resolve();
-      }).catch(function(e){
-        console.log(JSON.stringify(e));
-        deferred.reject(e);
-      });
+    $ionicPlatform.ready(function(){
+      try {
+        cordova.plugins.notification.local.cancel(1);
+
+        cordova.plugins.notification.local.schedule({
+            id: 1,
+            title: "Congrats, there is a deal availible!", 
+            text: "Click to redeem coupon",
+            at: now,
+            every: "year"
+        });
+
+        updateNotificationTimestamp();  
+      } catch (e) {
+        console.log("-- GeoService.generateNotification: error");
+        console.log(e)
+      }
+      
+
+      deferred.resolve();
+      
+    });
     
     return deferred.promise;
   }
@@ -714,12 +729,14 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
       var time_since_in_minutes = Math.round(Math.abs((now.getTime() - notificationTime.getTime())/(oneMin)));
 
       var mins_in_a_day = 1440;
-
+      
       if( time_since_in_minutes <= 5 || time_since_in_minutes >= mins_in_a_day){
+        console.log("success");
         $scope.state = 3;
       }else{
         // too late
-        $scope.state = 1;
+        console.log("too late");
+        $scope.state = 2;
       }
       
       deferred.resolve();
