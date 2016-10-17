@@ -325,6 +325,7 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
   }
 
   function generateNotification(){
+    // SEE: https://github.com/katzer/cordova-plugin-local-notifications/pull/1107
     console.log("-- GeoService.generateNotification")
     var deferred = $q.defer();
     var now = new Date();
