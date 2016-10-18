@@ -329,7 +329,7 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
     console.log("-- GeoService.generateNotification")
     var deferred = $q.defer();
     var now = new Date();
-    var last = getnotificationTimestamp();
+    now = new Date( now.setSeconds(now.getSeconds() + 10) );
     
     $ionicPlatform.ready(function(){
       try {
@@ -678,7 +678,6 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
   $scope.condition;
   $scope.disabledBtn = true;
   
-
   // monitor app states (foreground / background)
   $ionicPlatform.ready(function() {
       document.addEventListener("resume", function(){
