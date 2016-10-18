@@ -477,10 +477,20 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
             longitude: options.longitude,
             notifyOnEntry: true
         }, function() {
-            console.log("-- Geoservice.configureGeofence(): Successfully added geofence");            
+            console.log("-- Geoservice.configureGeofence(): Successfully added geofence");
+            console.log("-- Geoservice.configureGeofence(): " + options.identifier);            
         }, function(error) {
             console.warn("-- Geoservice.configureGeofence(): Failed to add geofence", error);
             deferred.reject();
+        });
+
+        // print the geofences
+        bg.getGeofences(function(geofences) {
+          geofences.forEach(function(geofence){
+            console.log("Geofence: ", geofence.identifier, geofence.radius, geofence.latitude, geofence.longitude);
+          });
+        }, function(error) {
+          console.warn("Failed to fetch geofences from server");
         });
 
         bg.configure(options, function(state) {
@@ -533,6 +543,9 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
   }
 })
 
+.service('ActivityService', function($q, ParticipantService, DOMAIN){
+  return {}
+})
 
 .controller('RegisterController', function($scope, $state, ParticipantService){
   console.log('RegisterController()');
