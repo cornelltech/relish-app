@@ -329,18 +329,12 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
     console.log("-- GeoService.generateNotification")
     var deferred = $q.defer();
     var now = new Date();
-    now = new Date( now.setSeconds(now.getSeconds() + 10) );
     
     $ionicPlatform.ready(function(){
       try {
-        cordova.plugins.notification.local.cancel(1);
-
         cordova.plugins.notification.local.schedule({
-            id: 1,
             title: "Congrats, there is a deal availible!", 
-            text: "Click to redeem coupon",
-            at: now,
-            every: "year"
+            text: "Click to redeem coupon"
         });
 
         updateNotificationTimestamp();  
@@ -701,6 +695,7 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
             // then look whether or not we are in time
             syncTime()
               .finally(function(){                
+                
                 $timeout(function(){
                   $scope.disabledBtn = false;
                 }, DELAY);
