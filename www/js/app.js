@@ -538,7 +538,27 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
 })
 
 .service('ActivityService', function($q, ParticipantService, DOMAIN){
-  return {}
+  
+  function logActivity(text){
+    var deferred = $q.defer();
+    var token = ParticipantService.getToken();
+    $http({
+      url: DOMAIN + '/activities',
+      method: 'POST',
+      headers: { 'Authorization': 'Token ' + token },
+      contentType: "application/json",
+      data: { test: text }
+    }).then(function(r){
+      deferred.resolve();
+    }).catch(function(e){
+      deferred.reject(e);
+    });
+    return deferred.promise;
+  }
+
+  return {
+    logActivity: logActivity
+  }
 })
 
 .controller('RegisterController', function($scope, $state, ParticipantService){
