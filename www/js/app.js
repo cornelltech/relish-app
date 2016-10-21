@@ -6,6 +6,7 @@
 angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospaced.qrcode'])
 
 .constant('DOMAIN', 'http://ec2-54-152-205-200.compute-1.amazonaws.com/api/v1')
+.constant('VERSION', '1.15')
 
 .run(function($rootScope, $window, $ionicLoading, $ionicPlatform, $urlRouter, $state, ParticipantService, ActivityService) {
   $ionicPlatform.ready(function() {
@@ -85,7 +86,7 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
     .state('settings', {
       url: '/settings',  
       templateUrl: 'templates/settings.html',
-      // controller: 'SettingsController'
+      controller: 'SettingsController'
     })
 
     .state('questions', {
@@ -530,6 +531,38 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
     });
   }
 
+  function getGeoFences(){
+    var deferred = $q.defer();
+    
+    $ionicPlatform.ready(function() {
+        if($window.BackgroundGeolocation){
+          var fences = [];      
+          bg = $window.BackgroundGeolocation;
+          // print the geofences
+          bg.getGeofences(function(geofences) {
+            
+            geofences.forEach(function(geofence){
+              
+              console.log("Geofence: ", geofence.identifier, geofence.radius, geofence.latitude, geofence.longitude);
+              fences.push(geofence);
+
+            });
+
+            deferred.resolve(fences);
+
+          }, function(error) {
+            console.warn("Failed to fetch geofences from server");
+          });
+      }else{
+        console.log('cant find plugin');
+        deferred.reject();
+      }
+
+    });
+
+    return deferred.promise;
+  }
+
   function inGeoFence(regions, radius){
     console.log('-- Geoservice.inGeoFence()');
      var deferred = $q.defer();
@@ -561,6 +594,7 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
     getCurrentPosition: getCurrentPosition,
     configureGeofence: configureGeofence,
     getDistance: getDistance,
+    getGeoFences: getGeoFences,
     getGeofenceTransitionTimestamp: getGeofenceTransitionTimestamp,
     getnotificationTimestamp: getnotificationTimestamp,
     inGeoFence: inGeoFence
@@ -929,4 +963,17 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
 
 })
 
-.controller('SettingsController', function($scope){})
+.controller('SettingsController', function($scope, GeoService, VERSION){
+  $scope.version = VERSION;
+  $scope.fences = [];
+  $scope.debug = false;
+
+  $scope.showDebug = function(){
+    $scope.debug = !$scope.debug; 
+  }
+
+  GeoService.getGeoFences()
+    .then(function(fences){
+      $scope.fences = fences;
+    })
+})

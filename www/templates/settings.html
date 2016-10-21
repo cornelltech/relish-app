@@ -1,0 +1,23 @@
+<ion-view view-title="Settings" on-double-tap="showDebug()">
+    
+    <a ui-sref="prime" class="button button-icon icon ion-ios-arrow-back" style="position:absolute; top:15px;left:15px;"></a>
+    
+    <ion-content style="margin-top:70px;">
+      
+      <ion-list>
+        <ion-item>
+            Version: {{version}}
+        </ion-item>
+      </ion-list>
+      
+      <ion-list ng-show="debug">
+        <div class="item item-divider">
+            Geofences
+        </div>
+        <ion-item ng-repeat="fence in fences">
+            {{fence.identifier}}: {{fence.radius}}, <{{fence.latitude}}, {{fence.longitude}}>
+        </ion-item>
+      </ion-list>
+      
+    </ion-content>
+</ion-view>
