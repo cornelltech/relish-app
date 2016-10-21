@@ -7,7 +7,7 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
 
 .constant('DOMAIN', 'http://ec2-54-152-205-200.compute-1.amazonaws.com/api/v1')
 
-.run(function($rootScope, $window, $ionicLoading, $ionicPlatform, $urlRouter, $state, ParticipantService) {
+.run(function($rootScope, $window, $ionicLoading, $ionicPlatform, $urlRouter, $state, ParticipantService, ActivityService) {
   $ionicPlatform.ready(function() {
     if($window.cordova && $window.cordova.plugins.Keyboard) {
       // Hide the accessory bar by default (remove this to show the accessory bar above the keyboard
@@ -40,6 +40,14 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
        $state.go('register');
      }
    });
+
+   if( ParticipantService.getToken() ){
+     ActivityService.logActivity('App Opened')
+        .finally(function(){
+          console.log('app opened');
+        });
+   }
+  
 
 
 })
@@ -124,8 +132,7 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
       data: { coop_id: coopId }
     }).then(function(r){
       cacheToken(r.data.token);
-      cacheCoopId(r.data.coop_id);
-      deferred.resolve();
+      cacheCoopId(r.data.coop_id);      
     }).catch(function(e){
       deferred.reject(e);
     });
@@ -183,7 +190,7 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
   }
 })
 
-.service('StudyService', function($q, $http, localStorageService, ParticipantService, DOMAIN){
+.service('StudyService', function($q, $http, localStorageService, ParticipantService, ActivityService, DOMAIN){
   
   function loadStudies(){
     var deferred = $q.defer();
@@ -275,7 +282,10 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
     console.log("-- StudyService.getCondition(): ");
     console.log(condition);
 
-    deferred.resolve(condition);
+    ActivityService.logActivity('Condition Presented is ' + condition.id)
+      .finally(function(){
+        deferred.resolve(condition);    
+      });
 
     return deferred.promise;
   }
@@ -286,7 +296,7 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
   }
 })
 
-.service('GeoService', function($q, $rootScope, $window, $timeout, $ionicPlatform, $cordovaLocalNotification, localStorageService){
+.service('GeoService', function($q, $rootScope, $window, $timeout, $ionicPlatform, $cordovaLocalNotification, ActivityService, localStorageService){
   var bg = null;
   var coords = {lat: 90, lng: 180};
   var CONST = 1.75;
@@ -450,11 +460,32 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
 
             updateGeofenceTransitionTimestamp();
 
-            // generate a notification
-            generateNotification()
-              .finally(function(){
-                bg.finish(taskId);    
-              });
+            var lat = location.coords.latitude;
+            var lng = location.coords.longitude
+
+            try {
+              ActivityService.logActivity('GeoFence Transition - ' + identifier + ' - ' + action + ' - ' + lat + ':' + lng)
+                .finally(function(){
+
+                  console.log('-- LOGGED TRANSITION');
+
+                  // generate a notification
+                  generateNotification()
+                    .finally(function(){
+                      
+                      console.log('-- GENERATED NOTIFICATION');
+
+                      bg.finish(taskId);    
+                    });
+
+                });  
+            } catch (error) {
+              console.log("ERROR");
+              console.log(error);
+              bg.finish(taskId);
+            }
+
+            
 
           } catch(e) {
             console.error("-- Geoservice.configureGeofence(): An error occurred in my code!", e);
@@ -537,7 +568,7 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
   }
 })
 
-.service('ActivityService', function($q, ParticipantService, DOMAIN){
+.service('ActivityService', function($q, $http, ParticipantService, DOMAIN){
   
   function logActivity(text){
     var deferred = $q.defer();
@@ -547,10 +578,14 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
       method: 'POST',
       headers: { 'Authorization': 'Token ' + token },
       contentType: "application/json",
-      data: { test: text }
+      data: { text: text }
     }).then(function(r){
+      console.log('-- ActivityService.logActivity: logged');
+      console.log(text);
       deferred.resolve();
     }).catch(function(e){
+      console.log('-- ActivityService.logActivity: error')
+      console.log(e)
       deferred.reject(e);
     });
     return deferred.promise;
@@ -590,7 +625,7 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
   $scope.goToPermissions = goToPermissions;
 })
 
-.controller('PermissionsController', function($scope, $state, $window, $ionicPlatform, GeoService){
+.controller('PermissionsController', function($scope, $state, $window, $ionicPlatform, ActivityService, GeoService){
   permissionsGranted = 0;
   $scope.geoPermissionsReqVisible = true;
   $scope.pushPermissionsReqVisible = false;
@@ -601,12 +636,22 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
     $ionicPlatform.ready(function(){
       GeoService.initBackgroundLocation()
         .then(function(){
-          permissionsGranted+=1;
-          $scope.geoPermissionsReqVisible = false;
-          $scope.pushPermissionsReqVisible = true;
+
+          ActivityService.logActivity('Granted Location Permissions')
+            .finally(function(){
+              permissionsGranted+=1;
+              $scope.geoPermissionsReqVisible = false;
+              $scope.pushPermissionsReqVisible = true;    
+            });
+
+          
         })
         .catch(function(){
           console.log("boo");
+          ActivityService.logActivity('Refused to Grant Location Permissions')
+            .finally(function(){
+                  
+            });
         });
     });
     
@@ -618,8 +663,21 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
       if($window.cordova && $window.cordova.plugins.notification.local){
           $window.cordova.plugins.notification.local.registerPermission(function (granted) {
             console.log('Permission has been granted: ' + granted);
-            permissionsGranted += 1;
-            shouldProceed();
+
+            if(granted){
+              ActivityService.logActivity('Granted Notification Permissions')
+                .finally(function(){
+                  permissionsGranted += 1;
+                  shouldProceed();        
+                });
+            }else{
+              ActivityService.logActivity('Refused to Grant Notification Permissions')
+                .finally(function(){
+                  permissionsGranted += 1;
+                  shouldProceed();        
+                });
+            }
+            
           });
       }else{
           console.log("missing local notification plugin");
@@ -682,7 +740,7 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
   $scope.submitAnswer = submitAnswer;
 })
 
-.controller('PrimeController', function($ionicPlatform, $scope, $timeout, $state, $q, StudyService, GeoService){
+.controller('PrimeController', function($ionicPlatform, $scope, $timeout, $state, $q, StudyService, ActivityService, GeoService){
   console.log('-- PrimeController');
 
   var DELAY = 5000; // ms
@@ -713,14 +771,18 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
         syncLocation()
           .finally(function(){
             // then look whether or not we are in time
-            syncTime()
-              .finally(function(){                
-                
-                $timeout(function(){
-                  $scope.disabledBtn = false;
-                }, DELAY);
+            // syncTime()
+            //   .finally(function(){                
+                if( $scope.state == 1 ){
+                  $scope.state = 3;
+                  
+                }
 
-              });
+                $timeout(function(){
+                    $scope.disabledBtn = false;
+                }, DELAY);
+                
+              // });
           });
       });
   }
@@ -816,14 +878,23 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
   }
 
   function claim(){
-    $state.go('coupon');
+    ActivityService.logActivity('Coupon Claim Button Pressed')
+    .finally(function(){
+      $state.go('coupon');                    
+    });
+    
   }
   $scope.claim = claim;
+
+  ActivityService.logActivity('Prime View Entered')
+    .finally(function(){
+                        
+    });
 
 
 })
 
-.controller('CouponController', function($scope, $state, StudyService){
+.controller('CouponController', function($scope, $state, ActivityService, StudyService){
   $scope.study;
   $scope.condition;
 
@@ -835,6 +906,7 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
         .then(function(r){
           $scope.condition = r;
           console.log($scope.condition);
+
         })
         .catch(function(e){
           console.log(e);
@@ -844,6 +916,11 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
     .catch(function(e){
       console.log(e);
       alert("Failed to syncStudies study");
+    });
+
+  ActivityService.logActivity('Coupon View Entered')
+    .finally(function(){
+                        
     });
 
   function close(){
