@@ -346,7 +346,6 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
             title: "Congrats, there is a deal availible!", 
             text: "Click to redeem coupon"
         });
-
         updateNotificationTimestamp();  
       } catch (e) {
         console.log("-- GeoService.generateNotification: error");
