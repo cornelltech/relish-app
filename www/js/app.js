@@ -308,7 +308,8 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
     // Application config
     debug: false,
     stopOnTerminate: false,
-    startOnBoot: true
+    startOnBoot: true,
+    geofenceProximityRadius: 100
   };
 
   function updateGeofenceTransitionTimestamp(){
