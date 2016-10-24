@@ -133,7 +133,8 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
       data: { coop_id: coopId }
     }).then(function(r){
       cacheToken(r.data.token);
-      cacheCoopId(r.data.coop_id);      
+      cacheCoopId(r.data.coop_id);
+      deferred.resolve();      
     }).catch(function(e){
       deferred.reject(e);
     });
@@ -457,6 +458,10 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
             console.log("  identifier: ", identifier);
             console.log("  action: ", action);
             console.log("  location: ", JSON.stringify(location));
+
+            console.log("=======================================");
+            console.log(JSON.stringify(geofence));
+            console.log("=======================================");
 
             updateGeofenceTransitionTimestamp();
 
