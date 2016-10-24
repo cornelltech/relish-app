@@ -12,11 +12,22 @@
       
       <ion-list ng-show="debug">
         <div class="item item-divider">
+            Timestamps
+        </div>
+        <ion-item>
+            Last Transition: {{lastTransition}}
+        </ion-item>
+        <ion-item>
+            Last Notification: {{lastNotification}}
+        </ion-item>
+
+        <div class="item item-divider">
             Geofences
         </div>
         <ion-item ng-repeat="fence in fences">
             {{fence.identifier}}: {{fence.radius}}, <{{fence.latitude}}, {{fence.longitude}}>
         </ion-item>
+
       </ion-list>
       
     </ion-content>

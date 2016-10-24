@@ -967,6 +967,8 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
   $scope.version = VERSION;
   $scope.fences = [];
   $scope.debug = false;
+  $scope.lastTransition = GeoService.getGeofenceTransitionTimestamp();
+  $scope.lastNotification = GeoService.getnotificationTimestamp();
 
   $scope.showDebug = function(){
     $scope.debug = !$scope.debug; 
