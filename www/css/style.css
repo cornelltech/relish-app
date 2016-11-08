@@ -1,3 +1,7 @@
+*{
+  font-family: 'Asap', sans-serif;
+}
+
 /* Empty. Add your own CSS if you like */
 .box{
   height: 100%;
@@ -12,6 +16,15 @@
 }
 .box-slug{
     text-align: center;
+}
+
+.bar-header.bar-light{
+  background-color: #21eaa1;
+
+}
+.bar-header.bar-light .title,
+.bar-header.bar-light a{
+  color: white;
 }
 
 /*ion-slides{
@@ -73,36 +86,39 @@
 	color: #ffffff;
 }
 .button.disabled, .button[disabled]{
-  background-color: #f7f7f7 !important;
-  color: #bfbfbf !important;
+  background-color: #16bf82 !important;
+  color: rgba(0, 0, 0, 0.2) !important;
 }
 
 .study-action{
-  position: absolute;
-  top: 51vh;
+  margin-top:-38px;
   width:100%;
+  height: 55px;
   padding-left: 15%;
   padding-right: 15%;
+
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-content: center;
+}
+.study-action button{
+  height: 55px;
+  width: 240px;
 }
 .study-text-content{
   padding-left:12%; 
   padding-right:12%;
 }
-ion-view{
-  
-}
 
 .study{
   height: 100vh;
-}
-.study .study-content{
-  
 }
 .study .study-text{
   margin-top: 35px;
 }
 .study .study-text h3{
-  font-size: 20px;
+  font-size: 30px;
   font-weight: bold;
   font-style: normal;
   font-stretch: normal;
@@ -110,7 +126,7 @@ ion-view{
   color: #21e8a0;
 }
 .study .study-text p{
-  font-size: 16px;
+  font-size: 20px;
   font-weight: normal;
   font-style: normal;
   font-stretch: normal;
@@ -127,10 +143,24 @@ ion-view{
   justify-content: center;
   align-items: center;
 }
-.study .study-content .study-img img{
-  height: 80%;
+.study .study-content .study-img .invalid{
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }
-.study .study-content .study-img .prime-img{
+.study .study-content .study-img .invalid img:first-child{
+  width: 50%;
+}
+.study .study-content .study-img .invalid img:nth-child(2){
+  width: 50%;
+  padding-top: 50px;
+}
+/*.study .study-content .study-img img{
+  height: 80%;
+}*/
+
+.study .study-content .study-img .prime img{
   height: 100vw;
   width: 100vw;
 }

@@ -3,7 +3,7 @@
 // angular.module is a global place for creating, registering and retrieving Angular modules
 // 'starter' is the name of this angular module example (also set in a <body> attribute in index.html)
 // the 2nd parameter is an array of 'requires'
-angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospaced.qrcode'])
+angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule'])
 
 .constant('DOMAIN', 'http://ec2-54-152-205-200.compute-1.amazonaws.com/api/v1')
 .constant('VERSION', '1.15')
@@ -312,6 +312,23 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
     geofenceProximityRadius: 100
   };
 
+  function configureBackgroundFetch() {
+    var Fetcher = window.BackgroundFetch;
+    // Your background-fetch handler.
+    var fetchCallback = function() {
+        console.log('[js] BackgroundFetch initiated');
+        Fetcher.finish();
+    }
+
+    var failureCallback = function() {
+        console.log('- BackgroundFetch failed');
+    };
+
+    Fetcher.configure(fetchCallback, failureCallback, {
+        stopOnTerminate: false
+    });
+  }
+
   function updateGeofenceTransitionTimestamp(){
     var n = new Date();
     localStorageService.set('geofenceTransitionTimestamp', n.getTime().toString());
@@ -386,6 +403,12 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
     var deferred = $q.defer();
     
     $ionicPlatform.ready(function(){
+
+      if($window.BackgroundFetch) {
+        console.log('has fetch');
+        configureBackgroundFetch();
+      }  
+
       if($window.BackgroundGeolocation){
         bg = $window.BackgroundGeolocation;
         // configure and start the plugin
@@ -670,6 +693,7 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
   $scope.pushPermissionsReqVisible = false;
   
   function requestGeoPermissions(){
+    console.log('permissions')
     var allowed = false;
         
     $ionicPlatform.ready(function(){
@@ -678,9 +702,13 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule', 'monospace
 
           ActivityService.logActivity('Granted Location Permissions')
             .finally(function(){
+              console.log('hey now');
+              
               permissionsGranted+=1;
+    
               $scope.geoPermissionsReqVisible = false;
-              $scope.pushPermissionsReqVisible = true;    
+              $scope.pushPermissionsReqVisible = true;
+
             });
 
           

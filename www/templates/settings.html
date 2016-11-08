@@ -1,12 +1,18 @@
-<ion-view view-title="Settings" hide-nav-bar="true" hide-back-button="true" can-swipe-back="false" on-double-tap="showDebug()">
+<ion-view view-title="Settings" can-swipe-back="false" on-double-tap="showDebug()">
     
-    <a ui-sref="prime" class="button button-icon icon ion-ios-arrow-back" style="position:absolute; top:15px;left:15px;"></a>
-    
-    <ion-content style="margin-top:70px;">
+    <div class="bar bar-header bar-light">
+        <a ui-sref="prime" class="button button-icon icon ion-ios-arrow-back"></a>
+        <h1 class="title">Settings</h1>
+    </div>
+
+    <ion-content>
       
       <ion-list>
         <ion-item>
             Version: {{version}}
+        </ion-item>
+        <ion-item>
+            Logout
         </ion-item>
       </ion-list>
       
