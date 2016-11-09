@@ -952,25 +952,19 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule'])
   $scope.study;
   $scope.condition;
 
-  StudyService.loadStudies()
-    .then(function(study){
-      $scope.study = study;
+  function syncStudies(){
+    console.log('-- CouponController.syncStudies');
 
-      StudyService.getCondition($scope.study.conditions)
-        .then(function(r){
-          $scope.condition = r;
-          console.log($scope.condition);
+    StudyService.getCondition()
+      .then(function(res){
+        $scope.study = res.study;
+        $scope.condition = res.condition;
 
-        })
-        .catch(function(e){
-          console.log(e);
-        });
-      
-    })
-    .catch(function(e){
-      console.log(e);
-      alert("Failed to syncStudies study");
-    });
+      }).catch(function(e){
+        console.log(e);
+      });
+
+  } syncStudies();
 
   ActivityService.logActivity('Coupon View Entered')
     .finally(function(){
