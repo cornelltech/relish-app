@@ -192,7 +192,7 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule'])
   }
 })
 
-.service('StudyService', function($q, $http, localStorageService, ParticipantService, ActivityService, DOMAIN){
+.service('StudyService', function($q, $http, localStorageService, ParticipantService, ActivityService, GeoService, DOMAIN){
   
   function loadStudies(){
     var deferred = $q.defer();
@@ -203,14 +203,12 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule'])
       method: 'GET',
       headers: { 'Authorization': 'Token ' + token }
     }).then(function(r){
-      r.data.results.forEach(function(obj){
-        if(obj.active){
-          // grabs the first study which is active
-          deferred.resolve(obj);
-        }
+
+      var activeStudies = r.data.results.filter(function(s){
+        return s.active;
       });
-      // nothing returns
-      deferred.resolve(undefined);
+      deferred.resolve(activeStudies);
+
     }).catch(function(e){
       deferred.reject(e);
     });
@@ -218,76 +216,106 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule'])
     return deferred.promise;
   }
 
-  function getCondition(conditions){
-    console.log("-- StudyService.getCondition()");
+
+  function getCondition(){
     var deferred = $q.defer();
-    var condition = undefined;
-    var lastCondition = undefined;
-
-    // check if a last accessed timestamp exists, if not set it to epoch
-    var timestamp_raw = localStorageService.get('lastConditionAccessTimestamp', 0);
-    if( !timestamp_raw ){ 
-      timestamp_raw = 0; 
-      var epoch = new Date(timestamp_raw);
-      localStorageService.set('lastConditionAccessTimestamp', epoch.getTime().toString());
-    }
-    var timestamp = new Date(parseInt(timestamp_raw));
     
-    // get the id of the last condition used
-    var lastConditionId = localStorageService.get('lastCondition');
+    // load up the studies
+    loadStudies()
+      .then(function(studies){
 
-    if( lastConditionId == null ){
-      // if nothing is used, get the first one
-      lastCondition = conditions[0];
-    }else {
-      lastCondition = conditions.find(function(obj, indx){
-        return obj.id == lastConditionId;
-      });
-      if( lastCondition == null ){
-        lastCondition = conditions[0];
-      }
-    }
+        var activeStudies = studies;
 
+        //
+        // determine the study of interest
+        //  -- go through all the conditions in a study,
+        //     once done, go to the next study
+        //     once done with all studies, go back to the first one and repeat 
+        // 
 
-    // if the condition was used today, show it again. if its another day, show a new one
-    var oneDay = 24*60*60*1000; // hours*minutes*seconds*milliseconds
-    var now = new Date();
-    // we dont care about these units
-    now.setSeconds(0);
-    now.setMinutes(0);
-    now.setHours(0);
-  
-    var time_since_in_days = Math.round(Math.abs((now.getTime() - timestamp.getTime())/(oneDay)));
-    
-    if( time_since_in_days > 0 ){
-      // more than a day has passed, so grab the next one
-      // grab the next condition in a round robin style
-      conditions.forEach(function(obj, indx){
-        if(lastCondition.id == obj.id){
-          if(indx == conditions.length - 1){
-            condition = conditions[0];
-          }else{
-            condition = conditions[indx + 1];
-          }
+        function getNextItem(arr, currId){
+          // helper function to get next arr item in round robin fashion
+          var indx = arr.findIndex(function(obj){ return obj.id == currId; });
+          if( indx > arr.length - 2 ) { return arr[0]; }
+          else{ return arr[ indx + 1 ]; }
         }
-      });
-    }else{
-      // access the same day, so return the condition
-      condition = lastCondition;
-    }
 
-    // cache for next time
-    localStorageService.set('lastCondition', condition.id);
-    // add a timestamp to the time we accessed this
-    localStorageService.set('lastConditionAccessTimestamp', now.getTime().toString());
+        var lastStudyId = localStorageService.get('lastStudyId');
+        var lastConditionId = localStorageService.get('lastConditionId');
 
-    console.log("-- StudyService.getCondition(): ");
-    console.log(condition);
+        // get the study
+        var study;
+        var condition;
+        if( !lastStudyId ){
+        
+          study = activeStudies[0];
+          condition = study.conditions[0];
+        
+        }else{
+          // check if all the conditions are met
+          var lastStudy = activeStudies.find(function(obj){ return obj.id == lastStudyId; });
+          var lastConditionIndx = lastStudy.conditions.findIndex(function(obj){ return obj.id == lastConditionId });
 
-    ActivityService.logActivity('Condition Presented is ' + condition.id)
-      .finally(function(){
-        deferred.resolve(condition);    
-      });
+          // get the timestamp of the last time the user pulled this
+          var lastTransitionTimestamp = localStorageService.get('lastTransitionTimestamp');
+          if( !lastTransitionTimestamp ){ 
+            lastTransitionTimestamp = new Date( );
+          }else{
+            lastTransitionTimestamp = new Date( lastTransitionTimestamp );
+          }
+          var now = new Date();
+          
+          // if the last time the user checked this is in the same day, dont advnace it
+          if( lastTransitionTimestamp.toDateString() === now.toDateString() ){
+            // next day...
+            // there are still conditions in this study, so grab the next one
+              study = lastStudy;
+              condition = study.conditions.find(function(obj){ return obj.id == lastConditionId; });
+          }else{
+            // same day...
+            if( lastConditionIndx == lastStudy.conditions.length - 1 ){
+              // we ran out of conditions in this study, so grab the next study and its first condition
+              study = getNextItem( activeStudies, lastStudyId );
+              condition = study.conditions[0];  
+            }else{
+              // there are still conditions in this study, so grab the next one
+              study = lastStudy;
+              condition = getNextItem( study.conditions, lastConditionId );
+            }
+
+
+          }
+
+        }
+
+        // cache it 
+        localStorageService.set('lastStudyId',  study.id );
+        localStorageService.set('lastConditionId',  condition.id );
+        var now = new Date();
+        localStorageService.set('lastTransitionTimestamp', now.getTime() );
+
+        // setup the geo fence for the study
+        study.regions.forEach(function(region){
+          GeoService.configureGeofence({
+            identifier: region.description,
+            notifyOnEntry: true,
+            notifyOnExit: false,
+            radius: 100,
+            latitude: region.lat,
+            longitude: region.lng
+          });
+        });
+
+
+        deferred.resolve({
+          study: study,
+          condition: condition
+        });
+
+
+    }).catch(function(e){
+      deferred.reject(e);
+    });
 
     return deferred.promise;
   }
@@ -450,7 +478,7 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule'])
         });       
       }else{
         console.log('-- Geoservice.getCurrentPosition: missing plugin')
-        deferred.reject();       
+        deferred.reject('missing plugin');
       }
     });
     return deferred.promise;
@@ -611,7 +639,7 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule'])
       })
       .catch(function(e){
         console.log(e);
-        deferred.reject();
+        deferred.reject(e);
       });
 
      return deferred.promise;
@@ -812,10 +840,18 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule'])
 
   var DELAY = 5000; // ms
   var RADIUS = 100; // m 
-  $scope.state = 0; // 0 - out of region, 1 - in the region, 2 - too late, 3 - prime  
+  $scope.state = 0; // 0 - out of region, 1 - in the region, 2 - too late, 3 - prime
+  
+  $scope.actionPrompt = "TOO FAR"; // TOO LATE, RELISH IT
+  $scope.detailsTitle = "Come and visit"; // Gotta be faster, Primer Title
+  $scope.detailsDescription = "You are currently too far from a participating store. We’ll notify you when you’re closer."
+  // There’s a 5 minute window in which you need to claim your coupon. Try again next time!
+  // Primer Description
+
+
   $scope.study;
   $scope.condition;
-  $scope.disabledBtn = true;
+  $scope.disableActionPrompt = true;
   
   // monitor app states (foreground / background)
   $ionicPlatform.ready(function() {
@@ -828,6 +864,17 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule'])
       }, false);
   });
 
+  function displayPrimer(){
+    $scope.state = 1;
+    $scope.actionPrompt = 'One Moment';
+    $scope.detailsTitle = $scope.condition.description;
+    $scope.detailsDescription = 'Press the "Relish It" button to claim your coupon'
+    $timeout(function(){
+        $scope.actionPrompt = 'RELISH IT';
+        $scope.disableActionPrompt = false;
+    }, DELAY);
+  }
+
 
   function updateState(){
     console.log('-- PrimeController.updateState')
@@ -836,21 +883,19 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule'])
       .then(function(){
         // first lets see if we are inside the fence
         syncLocation()
-          .finally(function(){
-            // then look whether or not we are in time
-            // syncTime()
-            //   .finally(function(){                
-                if( $scope.state == 1 ){
-                  $scope.state = 3;
-                  
-                }
+          .then(function(inRegion){
+            
+            if(inRegion){
+              // see if we opened the app in time
+              displayPrimer();
+              // the app was not opened in time
+            }
+            // we are not in the region - so leave it
 
-                $timeout(function(){
-                    $scope.disabledBtn = false;
-                }, DELAY);
-                
-              // });
+          }).catch(function(e){
+            console.log(e);
           });
+
       });
   }
   updateState();
@@ -858,50 +903,13 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule'])
   function syncLocation(){
     console.log('-- PrimeController.syncLocation');
     var deferred = $q.defer();
-    GeoService.inGeoFence($scope.study.regions, RADIUS)
+    GeoService.inGeoFence($scope.study.regions, 100)
       .then(function(inRegion){
-        if(inRegion){
-          $scope.state = 1;
-        }else{
-          $scope.state = 0;
-        }
-        deferred.resolve();
+        deferred.resolve(inRegion);
       })
       .catch(function(e){
         deferred.reject(e);
       });
-    return deferred.promise;
-  }
-
-  function syncTime(){
-    console.log('-- PrimeController.syncTime');
-    var deferred = $q.defer();
-
-    if( $scope.state == 1){
-      var window = 5; // mins
-      var notificationTime = GeoService.getnotificationTimestamp();
-
-      var oneMin = 60*1000; // seconds*milliseconds
-      var now = new Date();
-      var time_since_in_minutes = Math.round(Math.abs((now.getTime() - notificationTime.getTime())/(oneMin)));
-
-      var mins_in_a_day = 1440;
-      
-      if( time_since_in_minutes <= 5 || time_since_in_minutes >= mins_in_a_day){
-        console.log("success");
-        $scope.state = 3;
-      }else{
-        // too late
-        console.log("too late");
-        $scope.state = 2;
-      }
-      
-      deferred.resolve();
-
-    }else{
-      deferred.resolve();
-    }
-
     return deferred.promise;
   }
 
@@ -909,35 +917,13 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule'])
     console.log('-- PrimeController.syncStudies');
     var deferred = $q.defer();
 
-    StudyService.loadStudies()
-      .then(function(study){
-        $scope.study = study;
-
-        $scope.study.regions.forEach(function(region){
-          GeoService.configureGeofence({
-            identifier: region.description,
-            notifyOnEntry: true,
-            notifyOnExit: false,
-            radius: RADIUS,
-            latitude: region.lat,
-            longitude: region.lng
-          });
-        });
-        
-        StudyService.getCondition($scope.study.conditions)
-          .then(function(r){
-            $scope.condition = r;
-            deferred.resolve();
-          })
-          .catch(function(e){
-            console.log(e);
-            deferred.reject(e);
-          });
-        
-      })
-      .catch(function(e){
+    StudyService.getCondition()
+      .then(function(res){
+        $scope.study = res.study;
+        $scope.condition = res.condition;
+        deferred.resolve();
+      }).catch(function(e){
         console.log(e);
-        alert("Failed to syncStudies study");
         deferred.reject(e);
       });
 
@@ -945,6 +931,7 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule'])
   }
 
   function claim(){
+    console.log('claim coupon');
     ActivityService.logActivity('Coupon Claim Button Pressed')
     .finally(function(){
       $state.go('coupon');                    
