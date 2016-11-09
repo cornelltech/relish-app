@@ -225,6 +225,7 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule'])
       .then(function(studies){
 
         var activeStudies = studies;
+        localStorageService.set('studies', activeStudies);
 
         //
         // determine the study of interest
@@ -288,6 +289,13 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule'])
 
         }
 
+        console.log("---------------------------------------------------")
+        console.log("The study is")
+        console.log(study);
+        console.log("The condition is");
+        console.log(condition);
+        console.log("---------------------------------------------------")
+
         // cache it 
         localStorageService.set('lastStudyId',  study.id );
         localStorageService.set('lastConditionId',  condition.id );
@@ -295,22 +303,15 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule'])
         localStorageService.set('lastTransitionTimestamp', now.getTime() );
 
         // setup the geo fence for the study
-        study.regions.forEach(function(region){
-          GeoService.configureGeofence({
-            identifier: region.description,
-            notifyOnEntry: true,
-            notifyOnExit: false,
-            radius: 100,
-            latitude: region.lat,
-            longitude: region.lng
+        GeoService.configureGeofences(study.regions)
+          .finally(function(){
+            deferred.resolve({
+              study: study,
+              condition: condition
+            });
           });
-        });
 
-
-        deferred.resolve({
-          study: study,
-          condition: condition
-        });
+        
 
 
     }).catch(function(e){
@@ -484,7 +485,7 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule'])
     return deferred.promise;
   }
 
-  function configureGeofence(options){
+  function configureGeofences(regions){
     // {
     //   identifier: "Geofence 1",
     //   notifyOnEntry: true,
@@ -493,99 +494,117 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule'])
     //   latitude: 45.5248868,
     //   longitude:  -73.6424362
     // }
-    console.log("-- Geoservice.configureGeofence()");
+    console.log("-- Geoservice.configureGeofences()");
+    var deferred = $q.defer();
 
     $ionicPlatform.ready(function() {
       if($window.BackgroundGeolocation){
-        
+
+        console.log('=========================');
+        console.log(regions);
+
         bg = $window.BackgroundGeolocation;
+        
         // set event listener
-        bg.onGeofence(function(geofence, taskId) {
+        console.log("-- Configuring event listener");
+        bg.onGeofence(function(params, taskId) {
           try {
-            var identifier = geofence.identifier;
-            var action     = geofence.action;
-            var location   = geofence.location;
-
-            console.log("- A Geofence transition occurred");
-            console.log("  identifier: ", identifier);
-            console.log("  action: ", action);
-            console.log("  location: ", JSON.stringify(location));
-
-            console.log("=======================================");
-            console.log(JSON.stringify(geofence));
-            console.log("=======================================");
-
-            updateGeofenceTransitionTimestamp();
-
+            console.log("-- onGeofence callback fired");
+            var identifier = params.identifier;
+            var action = params.action;
+            var location = params.location;
             var lat = location.coords.latitude;
-            var lng = location.coords.longitude
+            var lng = location.coords.longitude;
 
-            try {
-              ActivityService.logActivity('GeoFence Transition - ' + identifier + ' - ' + action + ' - ' + lat + ':' + lng)
-                .finally(function(){
+            console.log('A geofence has been crossed: ', identifier);
+            console.log('ENTER or EXIT?: ', action);
+            console.log('location: ', JSON.stringify(location));
 
-                  console.log('-- LOGGED TRANSITION');
-
-                  // generate a notification
-                  generateNotification()
-                    .finally(function(){
-                      
-                      console.log('-- GENERATED NOTIFICATION');
-
-                      bg.finish(taskId);    
-                    });
-
-                });  
-            } catch (error) {
-              console.log("ERROR");
-              console.log(error);
-              bg.finish(taskId);
-            }
-
-            
+            // if( action == 'ENTER' ){
+            //   // ENTER
+            //   try {
+            //     ActivityService.logActivity('GeoFence Transition - ' + identifier + ' - ' + action + ' - ' + lat + ':' + lng)
+            //       .finally(function(){
+            //         // generate a notification
+            //         generateNotification()
+            //           .finally(function(){
+            //             bg.finish(taskId);    
+            //           });
+            //       });  
+            //   } catch (error) {
+            //     console.error("-- Geoservice.configureGeofence(): An error occurred in my code!", e);
+            //     bg.finish(taskId);
+            //   }
+            // }else{
+            //   // EXIT
+            //   try {
+            //     ActivityService.logActivity('GeoFence Transition - ' + identifier + ' - ' + action + ' - ' + lat + ':' + lng)
+            //       .finally(function(){
+            //         bg.finish(taskId);
+            //       });
+            //   } catch (error) {
+            //     console.error("-- Geoservice.configureGeofence(): An error occurred in my code!", e);
+            //     bg.finish(taskId);
+            //   }
+            // }
 
           } catch(e) {
             console.error("-- Geoservice.configureGeofence(): An error occurred in my code!", e);
-            bg.finish(taskId);
           }
+          bg.finish(taskId);
 
         });
 
-        // bg.removeGeofence(options.identifier);
-        bg.addGeofence({
-            identifier: options.identifier,
-            radius: options.radius,
-            latitude: options.latitude,
-            longitude: options.longitude,
-            notifyOnEntry: true
-        }, function() {
-            console.log("-- Geoservice.configureGeofence(): Successfully added geofence");
-            console.log("-- Geoservice.configureGeofence(): " + options.identifier);            
-        }, function(error) {
-            console.warn("-- Geoservice.configureGeofence(): Failed to add geofence", error);
-            deferred.reject();
-        });
 
-        // print the geofences
+        // Setup the geofences
         bg.getGeofences(function(geofences) {
+          // clean up the geofences
           geofences.forEach(function(geofence){
-            console.log("Geofence: ", geofence.identifier, geofence.radius, geofence.latitude, geofence.longitude);
+              console.log("REMOVING:");
+              console.log("Geofence: ", geofence.identifier, geofence.radius, geofence.latitude, geofence.longitude);
+              bg.removeGeofence(geofence.identifier); 
           });
-        }, function(error) {
-          console.warn("Failed to fetch geofences from server");
+
+          // add the geofences
+          console.log("-- Adding geofences");
+          regions.forEach(function(region){
+            
+            // add it
+            bg.addGeofence({
+                identifier: region.description,
+                radius: 100,
+                latitude: region.lat,
+                longitude: region.lng,
+                notifyOnEntry: true
+              }, function( ) {
+                  console.log("-- Geoservice.configureGeofence(): Successfully added geofence");
+                  console.log("-- Geoservice.configureGeofence(): " + region);
+              }, function(error) {
+                  console.warn("-- Geoservice.configureGeofence(): Failed to add geofence", error);
+            });
+
+          });
+
         });
 
+        // start it if it is not started
         bg.configure(options, function(state) {
           // Plugin is configured and ready to use.
           if (!state.enabled) {
             bg.start();
           }
+
+          deferred.resolve();
+
         });
 
       }else{
         console.log("-- Geoservice.configureGeofence(): Cant find plugin");
+        deferred.reject();
       }
     });
+
+    return deferred.promise;
   }
 
   function getGeoFences(){
@@ -649,7 +668,7 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule'])
     coords: coords,
     initBackgroundLocation: initBackgroundLocation,
     getCurrentPosition: getCurrentPosition,
-    configureGeofence: configureGeofence,
+    configureGeofences: configureGeofences,
     getDistance: getDistance,
     getGeoFences: getGeoFences,
     getGeofenceTransitionTimestamp: getGeofenceTransitionTimestamp,
@@ -838,8 +857,7 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule'])
 .controller('PrimeController', function($ionicPlatform, $scope, $timeout, $state, $q, StudyService, ActivityService, GeoService){
   console.log('-- PrimeController');
 
-  var DELAY = 5000; // ms
-  var RADIUS = 100; // m 
+  var DELAY = 5000; // ms 
   $scope.state = 0; // 0 - out of region, 1 - in the region, 2 - too late, 3 - prime
   
   $scope.actionPrompt = "TOO FAR"; // TOO LATE, RELISH IT
@@ -869,10 +887,12 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule'])
     $scope.actionPrompt = 'One Moment';
     $scope.detailsTitle = $scope.condition.description;
     $scope.detailsDescription = 'Press the "Relish It" button to claim your coupon'
+    
     $timeout(function(){
         $scope.actionPrompt = 'RELISH IT';
         $scope.disableActionPrompt = false;
     }, DELAY);
+
   }
 
 
@@ -884,7 +904,7 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule'])
         // first lets see if we are inside the fence
         syncLocation()
           .then(function(inRegion){
-            
+            console.log(inRegion);
             if(inRegion){
               // see if we opened the app in time
               displayPrimer();
@@ -903,7 +923,8 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule'])
   function syncLocation(){
     console.log('-- PrimeController.syncLocation');
     var deferred = $q.defer();
-    GeoService.inGeoFence($scope.study.regions, 100)
+
+    GeoService.inGeoFence($scope.study.regions, 150)
       .then(function(inRegion){
         deferred.resolve(inRegion);
       })
@@ -931,12 +952,10 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule'])
   }
 
   function claim(){
-    console.log('claim coupon');
     ActivityService.logActivity('Coupon Claim Button Pressed')
-    .finally(function(){
-      $state.go('coupon');                    
-    });
-    
+      .finally(function(){
+        $state.go('coupon');                    
+      });
   }
   $scope.claim = claim;
 
