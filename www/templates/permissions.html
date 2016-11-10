@@ -3,8 +3,14 @@
 
         <div ng-show="geoPermissionsReqVisible">
             <h1 class="title">Location Permissions</h1>
-            <p>
-                Giving us permission to know your location is essential for this app to do its magic (and give you coupons). Don’t worry -- we’re only using this information so we can send you notifications and coupons just when you’re headed to the store. That’s it!
+            <p class="subtitle">
+                Giving us permission to know your location is essential for this app to do its magic (and give you coupons).
+            </p>
+            <p class="subtitle">
+                Don’t worry -- we’re only using this information so we can send you notifications and coupons just when you’re headed to the store.
+            </p>
+            <p class="subtitle">
+                That’s it! 🎉
             </p>
             <button class="button button-block button-outline button-balanced" 
                     ng-click="requestGeoPermissions()">
@@ -14,8 +20,8 @@
         
         <div ng-show="pushPermissionsReqVisible">
             <h1 class="title">Notification Permissions</h1>
-            <p>
-                Giving us permission to send you notifications is essential for this app to do its magic (and give you coupons). Don’t worry -- we’ll only send you notifications when we think you’re headed to the store so you won’t miss out on any available coupons.
+            <p class="subtitle">
+                We use notifications to let you know there is a coupon availible when you are at the store.
             </p>
             <button class="button button-block button-outline button-balanced" 
                     ng-click="requestPushPermissions()">

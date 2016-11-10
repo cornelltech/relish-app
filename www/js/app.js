@@ -289,13 +289,6 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule'])
 
         }
 
-        console.log("---------------------------------------------------")
-        console.log("The study is")
-        console.log(study);
-        console.log("The condition is");
-        console.log(condition);
-        console.log("---------------------------------------------------")
-
         // cache it 
         localStorageService.set('lastStudyId',  study.id );
         localStorageService.set('lastConditionId',  condition.id );
@@ -358,58 +351,6 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule'])
     });
   }
 
-  function updateGeofenceTransitionTimestamp(){
-    var n = new Date();
-    localStorageService.set('geofenceTransitionTimestamp', n.getTime().toString());
-  }
-  function getGeofenceTransitionTimestamp(){
-    var t = localStorageService.get('geofenceTransitionTimestamp');
-    if(t){
-      return new Date( parseInt(t) );
-    }else{
-      return new Date(0);
-    }
-  }
-  function updateNotificationTimestamp(){
-    var n = new Date();
-    localStorageService.set('notificationTimestamp', n.getTime().toString());
-  }
-  function getnotificationTimestamp(){
-    var t = localStorageService.get('notificationTimestamp');
-    if(t){
-      return new Date( parseInt(t) );
-    }else{
-      return new Date(0);
-    }
-  }
-
-  function generateNotification(){
-    // SEE: https://github.com/katzer/cordova-plugin-local-notifications/pull/1107
-    console.log("-- GeoService.generateNotification")
-    var deferred = $q.defer();
-    var now = new Date();
-    
-    $ionicPlatform.ready(function(){
-      try {
-        cordova.plugins.notification.local.schedule({
-            title: "Congrats, there is a deal availible!", 
-            text: "Click to redeem coupon"
-        });
-        updateNotificationTimestamp();  
-      } catch (e) {
-        console.log("-- GeoService.generateNotification: error");
-        console.log(e)
-      }
-      
-
-      deferred.resolve();
-      
-    });
-    
-    return deferred.promise;
-  }
-  
-
   function getDistance(lat1,lon1,lat2,lon2) {
     var R = 6371; // Radius of the earth in km
     var dLat = deg2rad(lat2-lat1);  // deg2rad below
@@ -440,6 +381,73 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule'])
 
       if($window.BackgroundGeolocation){
         bg = $window.BackgroundGeolocation;
+
+        // configure the geofence callback
+        bg.onGeofence(function(params, taskId) {
+          try {
+            console.log("=================================================");
+            console.log("==============     onGeofence()     =============");
+            console.log("=================================================");
+            
+            var location = params.location;
+            var identifier = params.identifier;
+            var action = params.action;
+
+            console.log('A geofence has been crossed: ', identifier);
+            console.log('ENTER or EXIT?: ', action);
+            console.log('location: ', JSON.stringify(location));
+
+           
+            if( action == 'ENTER' ){
+              // act on enter
+              var lastEnter = new Date( 0 );
+              var lastEnterTimestamp = localStorageService.get('lastEnterTimestamp');
+              if( lastEnterTimestamp ){
+                lastEnter = new Date( lastEnterTimestamp );
+              }
+              
+              console.log("Generating Push Notification");              
+              var n = new Date();
+              var _5_seconds_from_now = new Date(n.getSeconds() + 5);
+              // generate a notification
+              cordova.plugins.notification.local.schedule({
+                id: 0,
+                title: "Congrats, there is a deal availible!", 
+                text: "Click to redeem coupon",
+                at: _5_seconds_from_now
+              });
+
+              localStorageService.set('lastEnterTimestamp', n.getTime());
+
+            }else{
+              // exiting
+              // cordova.plugins.notification.local.cancelAll( );
+
+            }
+
+          } catch(e) {
+            console.error('An error occurred in my application code', e);
+            bg.finish(taskId);
+          }
+
+          // push to the server
+          console.log("Pushing to server");
+          ActivityService.logActivity("GEOFENCE TRANSITION - " + identifier + " - " + action + " - " + location.coords.latitude + ":" + location.coords.longitude)
+            .finally(function(){
+              
+              console.log("=================================================");
+              console.log("==============    /onGeofence()     =============");
+              console.log("=================================================");
+
+              // The plugin runs your callback in a background-thread:  
+              // you MUST signal to the native plugin when your callback is finished so it can halt the thread.
+              // IF YOU DON'T, iOS WILL KILL YOUR APP
+              bg.finish(taskId);
+            });
+            
+            
+        });
+
         // configure and start the plugin
         bg.configure(options, function(state) {
           // Plugin is configured and ready to use.
@@ -499,108 +507,58 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule'])
 
     $ionicPlatform.ready(function() {
       if($window.BackgroundGeolocation){
-
-        console.log('=========================');
-        console.log(regions);
-
-        bg = $window.BackgroundGeolocation;
-        
-        // set event listener
-        console.log("-- Configuring event listener");
-        bg.onGeofence(function(params, taskId) {
-          try {
-            console.log("-- onGeofence callback fired");
-            var identifier = params.identifier;
-            var action = params.action;
-            var location = params.location;
-            var lat = location.coords.latitude;
-            var lng = location.coords.longitude;
-
-            console.log('A geofence has been crossed: ', identifier);
-            console.log('ENTER or EXIT?: ', action);
-            console.log('location: ', JSON.stringify(location));
-
-            // if( action == 'ENTER' ){
-            //   // ENTER
-            //   try {
-            //     ActivityService.logActivity('GeoFence Transition - ' + identifier + ' - ' + action + ' - ' + lat + ':' + lng)
-            //       .finally(function(){
-            //         // generate a notification
-            //         generateNotification()
-            //           .finally(function(){
-            //             bg.finish(taskId);    
-            //           });
-            //       });  
-            //   } catch (error) {
-            //     console.error("-- Geoservice.configureGeofence(): An error occurred in my code!", e);
-            //     bg.finish(taskId);
-            //   }
-            // }else{
-            //   // EXIT
-            //   try {
-            //     ActivityService.logActivity('GeoFence Transition - ' + identifier + ' - ' + action + ' - ' + lat + ':' + lng)
-            //       .finally(function(){
-            //         bg.finish(taskId);
-            //       });
-            //   } catch (error) {
-            //     console.error("-- Geoservice.configureGeofence(): An error occurred in my code!", e);
-            //     bg.finish(taskId);
-            //   }
-            // }
-
-          } catch(e) {
-            console.error("-- Geoservice.configureGeofence(): An error occurred in my code!", e);
-          }
-          bg.finish(taskId);
-
-        });
+        console.log("-- Plugin found");
+        var bg = $window.BackgroundGeolocation;
 
 
-        // Setup the geofences
-        bg.getGeofences(function(geofences) {
-          // clean up the geofences
-          geofences.forEach(function(geofence){
-              console.log("REMOVING:");
-              console.log("Geofence: ", geofence.identifier, geofence.radius, geofence.latitude, geofence.longitude);
-              bg.removeGeofence(geofence.identifier); 
-          });
+        // erase everything first
+        bg.removeGeofences(function() {
+            console.log("Successfully removed all geofences");
 
-          // add the geofences
-          console.log("-- Adding geofences");
-          regions.forEach(function(region){
-            
-            // add it
-            bg.addGeofence({
-                identifier: region.description,
-                radius: 100,
-                latitude: region.lat,
-                longitude: region.lng,
-                notifyOnEntry: true
-              }, function( ) {
-                  console.log("-- Geoservice.configureGeofence(): Successfully added geofence");
-                  console.log("-- Geoservice.configureGeofence(): " + region);
-              }, function(error) {
-                  console.warn("-- Geoservice.configureGeofence(): Failed to add geofence", error);
+            // 37.330472, -122.029121 -> apple infinite loop
+            // map geofences
+            var geofences = regions.map(function(region){
+              return {
+                  identifier: region.id.toString(),
+                  radius: 150,
+                  latitude: region.lat,
+                  longitude: region.lng,
+                  notifyOnEntry: true,
+                  notifyOnExit: true
+              }
             });
+            
 
+            console.log("-- Adding geofence");
+            console.log(geofences);
+            bg.addGeofences(geofences, function() {
+                console.log("Successfully added geofence");
+
+                console.log('Update config');
+                bg.setConfig(options, function(state) {
+                    if (!state.enabled) {
+                      bg.start();
+                    }
+                    deferred.resolve()
+                }, function() {
+                    console.log('failed to setConfig');
+                    deferred.reject('Failed to setConfig()');
+                });
+
+                
+            }, function(error) {
+                console.warn("Failed to add geofence", error);
+                deferred.reject('Failed to add geofences');
+            });
+  
+          }, function(error) {
+              console.warn("Failed to remove geofence", error);
+              deferred.reject('Failed to remove geofences');
           });
-
-        });
-
-        // start it if it is not started
-        bg.configure(options, function(state) {
-          // Plugin is configured and ready to use.
-          if (!state.enabled) {
-            bg.start();
-          }
-
-          deferred.resolve();
-
-        });
 
       }else{
         console.log("-- Geoservice.configureGeofence(): Cant find plugin");
-        deferred.reject();
+        deferred.reject('Failed to find plugin');
       }
     });
 
@@ -671,8 +629,6 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule'])
     configureGeofences: configureGeofences,
     getDistance: getDistance,
     getGeoFences: getGeoFences,
-    getGeofenceTransitionTimestamp: getGeofenceTransitionTimestamp,
-    getnotificationTimestamp: getnotificationTimestamp,
     inGeoFence: inGeoFence
   }
 })
@@ -803,7 +759,7 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule'])
 
   function shouldProceed(){
     if(permissionsGranted >= 2){
-      $state.go('questions');
+      $state.go('prime');
     }
   }
 
@@ -884,7 +840,7 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule'])
 
   function displayPrimer(){
     $scope.state = 1;
-    $scope.actionPrompt = 'One Moment';
+    $scope.actionPrompt = '...';
     $scope.detailsTitle = $scope.condition.description;
     $scope.detailsDescription = 'Press the "Relish It" button to claim your coupon'
     
@@ -924,7 +880,7 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule'])
     console.log('-- PrimeController.syncLocation');
     var deferred = $q.defer();
 
-    GeoService.inGeoFence($scope.study.regions, 150)
+    GeoService.inGeoFence($scope.study.regions, 175)
       .then(function(inRegion){
         deferred.resolve(inRegion);
       })
@@ -997,16 +953,31 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule'])
 
 })
 
-.controller('SettingsController', function($scope, GeoService, VERSION){
+.controller('SettingsController', function($scope, $state, localStorageService, ActivityService, GeoService, VERSION){
   $scope.version = VERSION;
   $scope.fences = [];
   $scope.debug = false;
-  $scope.lastTransition = GeoService.getGeofenceTransitionTimestamp();
-  $scope.lastNotification = GeoService.getnotificationTimestamp();
+
+  ActivityService.logActivity('Settings View Entered')
+    .finally(function(){
+                        
+    });
 
   $scope.showDebug = function(){
     $scope.debug = !$scope.debug; 
   }
+
+  function logout(){
+    // erase everything
+    ActivityService.logActivity('Logging out')
+      .finally(function(){
+        localStorageService.clearAll();
+        $state.go('register');                    
+      });
+
+    
+  }
+  $scope.logout = logout;
 
   GeoService.getGeoFences()
     .then(function(fences){

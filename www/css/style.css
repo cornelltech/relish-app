@@ -2,6 +2,9 @@
   font-family: 'Asap', sans-serif;
 }
 
+
+
+
 /* Empty. Add your own CSS if you like */
 .box{
   height: 100%;
@@ -173,4 +176,27 @@
 .coupon-img img{
   width: 80%;
   height: initial !important;
+}
+
+
+
+
+
+
+
+
+
+
+
+.title{
+  color: #21e8a0;
+}
+.subtitle{
+  font-size: 20px;
+  font-weight: normal;
+  font-style: normal;
+  font-stretch: normal;
+  line-height: 1.13;
+  text-align: center;
+  color: rgba(128, 128, 128, 0.75);
 }
