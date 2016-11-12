@@ -409,7 +409,7 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule'])
               var now = new Date();
 
               var timeDiff = Math.abs(now.getTime() - lastEnter.getTime());
-              var diffDays = Math.ceil(timeDiff / (1000 * 3600 * 24)); 
+              var diffDays = timeDiff / (1000 * 3600 * 24); 
 
               if( diffDays >= 1 ){
                 console.log("Generating Push Notification");              
