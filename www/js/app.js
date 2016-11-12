@@ -6,7 +6,7 @@
 angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule'])
 
 .constant('DOMAIN', 'http://ec2-54-152-205-200.compute-1.amazonaws.com/api/v1')
-.constant('VERSION', '1.15')
+.constant('VERSION', '1.20')
 
 .run(function($rootScope, $window, $ionicLoading, $ionicPlatform, $urlRouter, $state, ParticipantService, ActivityService) {
   $ionicPlatform.ready(function() {
@@ -406,16 +406,32 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule'])
                 lastEnter = new Date( lastEnterTimestamp );
               }
               
-              console.log("Generating Push Notification");              
-              var n = new Date();
-              var _5_seconds_from_now = new Date(n.getSeconds() + 5);
-              // generate a notification
-              cordova.plugins.notification.local.schedule({
-                id: 0,
-                title: "Congrats, there is a deal availible!", 
-                text: "Click to redeem coupon",
-                at: _5_seconds_from_now
-              });
+              var now = new Date();
+
+              var timeDiff = Math.abs(now.getTime() - lastEnter.getTime());
+              var diffDays = Math.ceil(timeDiff / (1000 * 3600 * 24)); 
+
+              if( diffDays >= 1 ){
+                console.log("Generating Push Notification");              
+                
+                var n = new Date();
+                var _5_seconds_from_now = new Date(n.getSeconds() + 5);
+                // generate a notification
+                cordova.plugins.notification.local.schedule({
+                  id: 0,
+                  title: "Congrats, there is a deal availible!", 
+                  text: "Click to redeem coupon",
+                  // at: _5_seconds_from_now
+                });
+
+                ActivityService.logActivity("notification scheduled")
+                  .finally(function(){
+                  
+                  });
+
+              }else{
+                console.log("Skipping push since it was sent once already");
+              }
 
               localStorageService.set('lastEnterTimestamp', n.getTime());
 
@@ -434,11 +450,6 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule'])
           console.log("Pushing to server");
           ActivityService.logActivity("GEOFENCE TRANSITION - " + identifier + " - " + action + " - " + location.coords.latitude + ":" + location.coords.longitude)
             .finally(function(){
-              
-              console.log("=================================================");
-              console.log("==============    /onGeofence()     =============");
-              console.log("=================================================");
-
               // The plugin runs your callback in a background-thread:  
               // you MUST signal to the native plugin when your callback is finished so it can halt the thread.
               // IF YOU DON'T, iOS WILL KILL YOUR APP
@@ -607,7 +618,7 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule'])
         var flag = false;
         regions.forEach(function(region){
           var d = getDistance(coords.lat, coords.lng, region.lat, region.lng);
-          if( d <= radius * CONST){
+          if( d <= radius ){
             flag = true;
            }
         });
@@ -880,7 +891,7 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule'])
     console.log('-- PrimeController.syncLocation');
     var deferred = $q.defer();
 
-    GeoService.inGeoFence($scope.study.regions, 175)
+    GeoService.inGeoFence($scope.study.regions, 150)
       .then(function(inRegion){
         deferred.resolve(inRegion);
       })
