@@ -6,7 +6,7 @@
 angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule'])
 
 .constant('DOMAIN', 'http://ec2-54-152-205-200.compute-1.amazonaws.com/api/v1')
-.constant('VERSION', '1.20')
+.constant('VERSION', '1.21')
 
 .run(function($rootScope, $window, $ionicLoading, $ionicPlatform, $urlRouter, $state, ParticipantService, ActivityService) {
   $ionicPlatform.ready(function() {
@@ -826,23 +826,28 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule'])
   console.log('-- PrimeController');
 
   var DELAY = 5000; // ms 
-  $scope.state = 0; // 0 - out of region, 1 - in the region, 2 - too late, 3 - prime
+  function initVariables(){
+    $scope.state = 0; // 0 - out of region, 1 - in the region, 2 - too late, 3 - prime
+    
+    $scope.actionPrompt = "TOO FAR"; // TOO LATE, RELISH IT
+    $scope.detailsTitle = "Come and visit"; // Gotta be faster, Primer Title
+    $scope.detailsDescription = "You are currently too far from a participating store. We’ll notify you when you’re closer."
+    // There’s a 5 minute window in which you need to claim your coupon. Try again next time!
+    // Primer Description
+
+
+    $scope.study;
+    $scope.condition;
+    $scope.disableActionPrompt = true;  
+  }
+  initVariables();
   
-  $scope.actionPrompt = "TOO FAR"; // TOO LATE, RELISH IT
-  $scope.detailsTitle = "Come and visit"; // Gotta be faster, Primer Title
-  $scope.detailsDescription = "You are currently too far from a participating store. We’ll notify you when you’re closer."
-  // There’s a 5 minute window in which you need to claim your coupon. Try again next time!
-  // Primer Description
-
-
-  $scope.study;
-  $scope.condition;
-  $scope.disableActionPrompt = true;
   
   // monitor app states (foreground / background)
   $ionicPlatform.ready(function() {
       document.addEventListener("resume", function(){
           console.log("-- ionicPlatform: resume event");
+          initVariables();
           updateState();
       }, false);
       document.addEventListener("pause", function(){
@@ -969,6 +974,13 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule'])
   $scope.version = VERSION;
   $scope.fences = [];
   $scope.debug = false;
+
+  var lastEnter = new Date( 0 );
+  var lastEnterTimestamp = localStorageService.get('lastEnterTimestamp');
+  if( lastEnterTimestamp ){
+    lastEnter = new Date( lastEnterTimestamp );
+  }
+  $scope.lastEnter = lastEnter;
 
   ActivityService.logActivity('Settings View Entered')
     .finally(function(){

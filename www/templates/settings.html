@@ -18,6 +18,12 @@
       
       <ion-list ng-show="debug">
         <div class="item item-divider">
+            Last Entered Geofence Timestamp
+        </div>
+        <ion-item>
+            {{lastEnter}}
+        </ion-item>
+        <div class="item item-divider">
             Geofences
         </div>
         <ion-item ng-repeat="fence in fences">
