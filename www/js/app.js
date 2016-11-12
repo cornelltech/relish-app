@@ -432,8 +432,9 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule'])
               }else{
                 console.log("Skipping push since it was sent once already");
               }
-
-              localStorageService.set('lastEnterTimestamp', n.getTime());
+              
+              var now = new Date();
+              localStorageService.set('lastEnterTimestamp', now.getTime());
 
             }else{
               // exiting
