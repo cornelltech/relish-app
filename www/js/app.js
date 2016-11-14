@@ -336,60 +336,61 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule'])
 
   function onGeofenceCallback(params, taskId){
 
-    try {
-      $ionicPlatform.ready(function(){
+    $ionicPlatform.ready(function(){
 
-        console.log("=================================================");
-        console.log("==============     onGeofence()     =============");
-        console.log("=================================================");
-        var bg = $window.BackgroundGeolocation;   
-        var location = params.location;
-        var identifier = params.identifier;
-        var action = params.action;
+      console.log("=================================================");
+      console.log("==============     onGeofence()     =============");
+      console.log("=================================================");
+      var bg = $window.BackgroundGeolocation;   
+      var location = params.location;
+      var identifier = params.identifier;
+      var action = params.action;
 
-        console.log('A geofence has been crossed: ', identifier);
-        console.log('ENTER or EXIT?: ', action);
-        console.log('location: ', JSON.stringify(location));
+      try {
 
+          console.log('A geofence has been crossed: ', identifier);
+          console.log('ENTER or EXIT?: ', action);
+          console.log('location: ', JSON.stringify(location));
 
-        var lastEnter = new Date( 0 );
-        var lastEnterTimestamp = localStorageService.get('lastEnterTimestamp');
-        if( lastEnterTimestamp ){
-          lastEnter = new Date( lastEnterTimestamp );
-        }
-        
-        var now = new Date();
-
-        var timeDiff = Math.abs(now.getTime() - lastEnter.getTime());
-        var diffDays = timeDiff / (1000 * 3600 * 24); 
-
-        if( diffDays >= 1 ){
-          console.log("Generating Push Notification");              
+          var lastEnter = new Date( 0 );
+          var lastEnterTimestamp = localStorageService.get('lastEnterTimestamp');
+          if( lastEnterTimestamp ){
+            lastEnter = new Date( lastEnterTimestamp );
+          }
           
-          var n = new Date();
-          var _5_seconds_from_now = new Date(n.getSeconds() + 5);
-          // generate a notification
-          cordova.plugins.notification.local.schedule({
-            id: 0,
-            title: "Congrats, there is a deal availible!", 
-            text: "Click to redeem coupon",
-            // at: _5_seconds_from_now
-          });
+          var now = new Date();
 
-          ActivityService.logActivity("notification scheduled")
-            .finally(function(){
+          var timeDiff = Math.abs(now.getTime() - lastEnter.getTime());
+          var diffDays = timeDiff / (1000 * 3600 * 24); 
+
+          if( diffDays >= 1 ){
+            console.log("Generating Push Notification");              
             
+            var n = new Date();
+            var _5_seconds_from_now = new Date(n.getSeconds() + 5);
+            // generate a notification
+            cordova.plugins.notification.local.schedule({
+              id: 0,
+              title: "Congrats, there is a deal availible!", 
+              text: "Click to redeem coupon",
+              // at: _5_seconds_from_now
             });
 
-        }else{
-          console.log("Skipping push since it was sent once already");
-        }
-        
-        var now = new Date();
-        localStorageService.set('lastEnterTimestamp', now.getTime());
+            ActivityService.logActivity("notification scheduled")
+              .finally(function(){
+              
+              });
 
-
-      });
+          }else{
+            console.log("Skipping push since it was sent once already");
+            ActivityService.logActivity("skipping notification scheduled since already sent once today")
+              .finally(function(){
+              
+              });
+          }
+          
+          var now = new Date();
+          localStorageService.set('lastEnterTimestamp', now.getTime());
 
       } catch(e) {
         console.error('An error occurred in my application code', e);
@@ -400,7 +401,6 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule'])
       ActivityService.logActivity("GEOFENCE TRANSITION - " + identifier + " - " + action + " - " + location.coords.latitude + ":" + location.coords.longitude)
         .catch(function(e){
           console.log("ERROR ON CALL TO API");
-          console.log(e);
         })
         .finally(function(){
           // The plugin runs your callback in a background-thread:  
@@ -408,6 +408,8 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule'])
           // IF YOU DON'T, iOS WILL KILL YOUR APP
           bg.finish(taskId);
         });
+
+    });
 
   }
 
@@ -493,7 +495,7 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule'])
                   latitude: region.lat,
                   longitude: region.lng,
                   notifyOnEntry: true,
-                  notifyOnExit: true
+                  // notifyOnExit: true
               }
             });
             
@@ -884,13 +886,18 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule'])
               // see if we opened the app in time
               displayPrimer();
               
-              ActivityService.logActivity('Prime View Entered - Study: ' + $scope.study.id + ' - Condition: ' + $scope.condition.id)
-              .finally(function(){
+              ActivityService.logActivity('Prime View Entered - In the Region - Study: ' + $scope.study.id + ' - Condition: ' + $scope.condition.id)
+                .finally(function(){
                                   
-              });
+                });
 
+            }else{
+              // we are not in the region - so leave it
+              ActivityService.logActivity('Prime View Entered - Out of Region - ')
+                .finally(function(){
+                                  
+                });
             }
-            // we are not in the region - so leave it
 
           }).catch(function(e){
             console.log(e);
