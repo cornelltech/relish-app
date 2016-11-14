@@ -6,7 +6,7 @@
 angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule'])
 
 .constant('DOMAIN', 'http://ec2-54-152-205-200.compute-1.amazonaws.com/api/v1')
-.constant('VERSION', '1.21')
+.constant('VERSION', '1.22')
 
 .run(function($rootScope, $window, $ionicLoading, $ionicPlatform, $urlRouter, $state, ParticipantService, ActivityService) {
   $ionicPlatform.ready(function() {
@@ -334,6 +334,83 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule'])
     geofenceProximityRadius: 100
   };
 
+  function onGeofenceCallback(params, taskId){
+
+    try {
+      $ionicPlatform.ready(function(){
+
+        console.log("=================================================");
+        console.log("==============     onGeofence()     =============");
+        console.log("=================================================");
+        var bg = $window.BackgroundGeolocation;   
+        var location = params.location;
+        var identifier = params.identifier;
+        var action = params.action;
+
+        console.log('A geofence has been crossed: ', identifier);
+        console.log('ENTER or EXIT?: ', action);
+        console.log('location: ', JSON.stringify(location));
+
+
+        var lastEnter = new Date( 0 );
+        var lastEnterTimestamp = localStorageService.get('lastEnterTimestamp');
+        if( lastEnterTimestamp ){
+          lastEnter = new Date( lastEnterTimestamp );
+        }
+        
+        var now = new Date();
+
+        var timeDiff = Math.abs(now.getTime() - lastEnter.getTime());
+        var diffDays = timeDiff / (1000 * 3600 * 24); 
+
+        if( diffDays >= 1 ){
+          console.log("Generating Push Notification");              
+          
+          var n = new Date();
+          var _5_seconds_from_now = new Date(n.getSeconds() + 5);
+          // generate a notification
+          cordova.plugins.notification.local.schedule({
+            id: 0,
+            title: "Congrats, there is a deal availible!", 
+            text: "Click to redeem coupon",
+            // at: _5_seconds_from_now
+          });
+
+          ActivityService.logActivity("notification scheduled")
+            .finally(function(){
+            
+            });
+
+        }else{
+          console.log("Skipping push since it was sent once already");
+        }
+        
+        var now = new Date();
+        localStorageService.set('lastEnterTimestamp', now.getTime());
+
+
+      });
+
+      } catch(e) {
+        console.error('An error occurred in my application code', e);
+      }
+
+      // push to the server
+      console.log("Pushing to server");
+      ActivityService.logActivity("GEOFENCE TRANSITION - " + identifier + " - " + action + " - " + location.coords.latitude + ":" + location.coords.longitude)
+        .catch(function(e){
+          console.log("ERROR ON CALL TO API");
+          console.log(e);
+        })
+        .finally(function(){
+          // The plugin runs your callback in a background-thread:  
+          // you MUST signal to the native plugin when your callback is finished so it can halt the thread.
+          // IF YOU DON'T, iOS WILL KILL YOUR APP
+          bg.finish(taskId);
+        });
+
+  }
+
   function configureBackgroundFetch() {
     var Fetcher = window.BackgroundFetch;
     // Your background-fetch handler.
@@ -350,23 +427,6 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule'])
         stopOnTerminate: false
     });
   }
-
-  function getDistance(lat1,lon1,lat2,lon2) {
-    var R = 6371; // Radius of the earth in km
-    var dLat = deg2rad(lat2-lat1);  // deg2rad below
-    var dLon = deg2rad(lon2-lon1); 
-    var a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-            Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * 
-            Math.sin(dLon/2) * Math.sin(dLon/2);
-    var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
-    var d = R * c * 1000; // Distance in m
-
-    return d;
-  }
-
-  function deg2rad(deg) {
-    return deg * (Math.PI/180)
-  }
   
   function initBackgroundLocation(){
     console.log("================>initBackgroundLocation<================");
@@ -374,91 +434,13 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule'])
     
     $ionicPlatform.ready(function(){
 
-      if($window.BackgroundFetch) {
-        console.log('has fetch');
-        configureBackgroundFetch();
-      }  
+      configureBackgroundFetch();      
 
       if($window.BackgroundGeolocation){
         bg = $window.BackgroundGeolocation;
 
         // configure the geofence callback
-        bg.onGeofence(function(params, taskId) {
-          try {
-            console.log("=================================================");
-            console.log("==============     onGeofence()     =============");
-            console.log("=================================================");
-            
-            var location = params.location;
-            var identifier = params.identifier;
-            var action = params.action;
-
-            console.log('A geofence has been crossed: ', identifier);
-            console.log('ENTER or EXIT?: ', action);
-            console.log('location: ', JSON.stringify(location));
-
-           
-            if( action == 'ENTER' ){
-              // act on enter
-              var lastEnter = new Date( 0 );
-              var lastEnterTimestamp = localStorageService.get('lastEnterTimestamp');
-              if( lastEnterTimestamp ){
-                lastEnter = new Date( lastEnterTimestamp );
-              }
-              
-              var now = new Date();
-
-              var timeDiff = Math.abs(now.getTime() - lastEnter.getTime());
-              var diffDays = timeDiff / (1000 * 3600 * 24); 
-
-              if( diffDays >= 1 ){
-                console.log("Generating Push Notification");              
-                
-                var n = new Date();
-                var _5_seconds_from_now = new Date(n.getSeconds() + 5);
-                // generate a notification
-                cordova.plugins.notification.local.schedule({
-                  id: 0,
-                  title: "Congrats, there is a deal availible!", 
-                  text: "Click to redeem coupon",
-                  // at: _5_seconds_from_now
-                });
-
-                ActivityService.logActivity("notification scheduled")
-                  .finally(function(){
-                  
-                  });
-
-              }else{
-                console.log("Skipping push since it was sent once already");
-              }
-              
-              var now = new Date();
-              localStorageService.set('lastEnterTimestamp', now.getTime());
-
-            }else{
-              // exiting
-              // cordova.plugins.notification.local.cancelAll( );
-
-            }
-
-          } catch(e) {
-            console.error('An error occurred in my application code', e);
-            bg.finish(taskId);
-          }
-
-          // push to the server
-          console.log("Pushing to server");
-          ActivityService.logActivity("GEOFENCE TRANSITION - " + identifier + " - " + action + " - " + location.coords.latitude + ":" + location.coords.longitude)
-            .finally(function(){
-              // The plugin runs your callback in a background-thread:  
-              // you MUST signal to the native plugin when your callback is finished so it can halt the thread.
-              // IF YOU DON'T, iOS WILL KILL YOUR APP
-              bg.finish(taskId);
-            });
-            
-            
-        });
+        bg.onGeofence(onGeofenceCallback);
 
         // configure and start the plugin
         bg.configure(options, function(state) {
@@ -478,32 +460,7 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule'])
 
     console.log("================>/initBackgroundLocation<================");
     return deferred.promise;
-  }
-
-  function getCurrentPosition(){
-    var deferred = $q.defer();
-    $ionicPlatform.ready(function(){
-      if($window.BackgroundGeolocation){
-        bg = $window.BackgroundGeolocation;
-
-        bg.getCurrentPosition(function(location, taskId) {
-            coords.lat = location.coords.latitude;
-            coords.lng = location.coords.longitude;
-            
-            bg.finish(taskId);
-            deferred.resolve();
-
-        }, function(errorCode) {
-            console.log('An location error occurred: ' + errorCode);
-            deferred.reject();
-        });       
-      }else{
-        console.log('-- Geoservice.getCurrentPosition: missing plugin')
-        deferred.reject('missing plugin');
-      }
-    });
-    return deferred.promise;
-  }
+  }  
 
   function configureGeofences(regions){
     // {
@@ -546,12 +503,16 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule'])
             bg.addGeofences(geofences, function() {
                 console.log("Successfully added geofence");
 
+                // configure the geofence callback
+                bg.onGeofence(onGeofenceCallback);
+
                 console.log('Update config');
                 bg.setConfig(options, function(state) {
                     if (!state.enabled) {
                       bg.start();
                     }
                     deferred.resolve()
+
                 }, function() {
                     console.log('failed to setConfig');
                     deferred.reject('Failed to setConfig()');
@@ -609,6 +570,48 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule'])
     return deferred.promise;
   }
 
+  function getDistance(lat1,lon1,lat2,lon2) {
+    var R = 6371; // Radius of the earth in km
+    var dLat = deg2rad(lat2-lat1);  // deg2rad below
+    var dLon = deg2rad(lon2-lon1); 
+    var a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * 
+            Math.sin(dLon/2) * Math.sin(dLon/2);
+    var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+    var d = R * c * 1000; // Distance in m
+
+    return d;
+  }
+
+  function deg2rad(deg) {
+    return deg * (Math.PI/180)
+  }
+
+  function getCurrentPosition(){
+    var deferred = $q.defer();
+    $ionicPlatform.ready(function(){
+      if($window.BackgroundGeolocation){
+        bg = $window.BackgroundGeolocation;
+
+        bg.getCurrentPosition(function(location, taskId) {
+            coords.lat = location.coords.latitude;
+            coords.lng = location.coords.longitude;
+            
+            bg.finish(taskId);
+            deferred.resolve();
+
+        }, function(errorCode) {
+            console.log('An location error occurred: ' + errorCode);
+            deferred.reject();
+        });       
+      }else{
+        console.log('-- Geoservice.getCurrentPosition: missing plugin')
+        deferred.reject('missing plugin');
+      }
+    });
+    return deferred.promise;
+  }
+
   function inGeoFence(regions, radius){
     console.log('-- Geoservice.inGeoFence()');
      var deferred = $q.defer();
@@ -635,7 +638,6 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule'])
   }
 
   return {
-    coords: coords,
     initBackgroundLocation: initBackgroundLocation,
     getCurrentPosition: getCurrentPosition,
     configureGeofences: configureGeofences,
@@ -881,7 +883,12 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule'])
             if(inRegion){
               // see if we opened the app in time
               displayPrimer();
-              // the app was not opened in time
+              
+              ActivityService.logActivity('Prime View Entered - Study: ' + $scope.study.id + ' - Condition: ' + $scope.condition.id)
+              .finally(function(){
+                                  
+              });
+
             }
             // we are not in the region - so leave it
 
@@ -932,11 +939,6 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule'])
   }
   $scope.claim = claim;
 
-  ActivityService.logActivity('Prime View Entered')
-    .finally(function(){
-                        
-    });
-
 
 })
 
@@ -952,16 +954,16 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule'])
         $scope.study = res.study;
         $scope.condition = res.condition;
 
+        ActivityService.logActivity('Coupon View Entered - Study: ' + $scope.study.id + ' - Condition: ' + $scope.condition.id)
+          .finally(function(){
+                              
+          });
+
       }).catch(function(e){
         console.log(e);
       });
 
   } syncStudies();
-
-  ActivityService.logActivity('Coupon View Entered')
-    .finally(function(){
-                        
-    });
 
   function close(){
     $state.go('prime');
