@@ -334,7 +334,7 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule'])
     debug: false,
     stopOnTerminate: false,
     startOnBoot: true,
-    geofenceProximityRadius: 100
+    geofenceProximityRadius: 150
   };
 
   function onGeofenceCallback(params, taskId){
