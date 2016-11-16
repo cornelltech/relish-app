@@ -6,7 +6,7 @@
 angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule'])
 
 .constant('DOMAIN', 'http://ec2-54-152-205-200.compute-1.amazonaws.com/api/v1')
-.constant('VERSION', '1.23')
+.constant('VERSION', '1.25')
 
 .run(function($rootScope, $window, $ionicLoading, $ionicPlatform, $urlRouter, $state, ParticipantService, ActivityService) {
   $ionicPlatform.ready(function() {
@@ -355,45 +355,59 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule'])
           console.log('ENTER or EXIT?: ', action);
           console.log('location: ', JSON.stringify(location));
 
-          var lastEnter = new Date( 0 );
-          var lastEnterTimestamp = localStorageService.get('lastEnterTimestamp');
-          if( lastEnterTimestamp ){
-            lastEnter = new Date( lastEnterTimestamp );
-          }
-          
-          var now = new Date();
+          if( action == 'ENTER' ){
 
-          var timeDiff = Math.abs(now.getTime() - lastEnter.getTime());
-          var diffDays = timeDiff / (1000 * 3600 * 24); 
-
-          if( diffDays >= 1 ){
-            console.log("Generating Push Notification");              
+            var lastEnter = new Date( 0 );
+            var lastEnterTimestamp = localStorageService.get('lastEnterTimestamp');
+            if( lastEnterTimestamp ){
+              lastEnter = new Date( lastEnterTimestamp );
+            }
             
-            var n = new Date();
-            var _5_seconds_from_now = new Date(n.getSeconds() + 5);
-            // generate a notification
-            cordova.plugins.notification.local.schedule({
-              id: 0,
-              title: "Congrats, there is a deal availible!", 
-              text: "Click to redeem coupon",
-              // at: _5_seconds_from_now
-            });
+            var now = new Date();
 
-            ActivityService.logActivity("notification scheduled")
-              .finally(function(){
+            var timeDiff = Math.abs(now.getTime() - lastEnter.getTime());
+            var diffDays = timeDiff / (1000 * 3600 * 24); 
+
+            if( diffDays >= 1 ){
+              console.log("Generating Push Notification");              
               
+              var n = new Date();
+              var _45_seconds_from_now = new Date(n.getSeconds() + 45);
+              // generate a notification
+              cordova.plugins.notification.local.schedule({
+                id: 0,
+                title: "Congrats, there is a deal availible!", 
+                text: "Click to redeem coupon",
+                at: _45_seconds_from_now
               });
+
+              ActivityService.logActivity("notification scheduled")
+                .finally(function(){
+                
+                });
+
+            }else{
+              console.log("Skipping push since it was sent once already");
+              ActivityService.logActivity("skipping notification scheduled")
+                .finally(function(){
+                
+                });
+            }
+            
+            var now = new Date();
+            localStorageService.set('lastEnterTimestamp', now.getTime());
 
           }else{
-            console.log("Skipping push since it was sent once already");
-            ActivityService.logActivity("skipping notification scheduled")
-              .finally(function(){
+
+            // EXIT
+            // cancel everything
+            cordova.plugins.notification.local.cancelAll(function() {
               
-              });
+            }, this);
+
           }
+
           
-          var now = new Date();
-          localStorageService.set('lastEnterTimestamp', now.getTime());
 
       } catch(e) {
         console.error('An error occurred in my application code', e);
