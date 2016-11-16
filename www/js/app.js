@@ -6,7 +6,7 @@
 angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule'])
 
 .constant('DOMAIN', 'http://ec2-54-152-205-200.compute-1.amazonaws.com/api/v1')
-.constant('VERSION', '1.22')
+.constant('VERSION', '1.23')
 
 .run(function($rootScope, $window, $ionicLoading, $ionicPlatform, $urlRouter, $state, ParticipantService, ActivityService) {
   $ionicPlatform.ready(function() {
@@ -124,13 +124,16 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule'])
     return localStorageService.set('coopId', coopId);
   };
   
-  function registerParticipant(coopId){
+  function registerParticipant(coopId, number){
     var deferred = $q.defer();
     $http({
       url: DOMAIN + '/participants',
       method: 'POST',
       contentType: "application/json",
-      data: { coop_id: coopId }
+      data: { 
+        coop_id: coopId, 
+        phone_number: number 
+      }
     }).then(function(r){
       cacheToken(r.data.token);
       cacheCoopId(r.data.coop_id);
@@ -383,7 +386,7 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule'])
 
           }else{
             console.log("Skipping push since it was sent once already");
-            ActivityService.logActivity("skipping notification scheduled since already sent once today")
+            ActivityService.logActivity("skipping notification scheduled")
               .finally(function(){
               
               });
@@ -680,10 +683,11 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule'])
 .controller('RegisterController', function($scope, $state, ParticipantService){
   console.log('RegisterController()');
   $scope.coopId = "";
+  $scope.number = "";
 
   function registerByCoopId(){
     if($scope.coopId){
-      ParticipantService.registerParticipant($scope.coopId)
+      ParticipantService.registerParticipant($scope.coopId, $scope.number)
         .then(function(){
           $state.go('about');
         })
@@ -941,7 +945,7 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule'])
   function claim(){
     ActivityService.logActivity('Coupon Claim Button Pressed')
       .finally(function(){
-        $state.go('coupon');                    
+        $state.go('coupon');
       });
   }
   $scope.claim = claim;

@@ -2,12 +2,23 @@
     <div class="flex-center-container">
         
         <h1 class="title">Relish</h1>
-        <h3 class="subtitle">Relish is your food coop companion</h3>
+        <h3 class="subtitle">Relish is your food co-op companion</h3>
 
+   
         <div class="list">
+            
             <label class="item item-input">
                 <input type="text" placeholder="Your Coop ID" ng-model="coopId">
             </label>
+
+            
+
+            <label class="item item-input" style="border-top: 1px solid rgb(221, 221, 221);">
+                <input type="text" placeholder="Your Phone Number" ng-model="number">
+            </label>
+
+            <small>We only ask for your number to verify your account. We will not contact you or use your number for any other purpose.</small>
+        
         </div>
         
         <button class="button button-block button-outline button-balanced" ng-click="registerByCoopId()">
@@ -18,5 +29,16 @@
             <a href="#"><small>Privacy</small></a>
             <a href="#"><small>Terms of User</small></a>
         </div> 
+
+        <div style="position: absolute; bottom: 32px;">
+            <div>
+                <img src="img/dukewordmark_vert_pms287.png" style="width:100px; margin:16px;" />
+                <img src="img/cornell.png" style="width:100px; margin:16px;"/>
+            </div>
+            <div>
+                <img src="img/CAH_banner_short_new.png" style="width:100px; margin:16px;" />
+                <img src="img/foundry.png" style="width:100px; margin:16px;"/>
+            </div>
+        </div>
     </div>
 </ion-view>
