@@ -6,7 +6,7 @@
 angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule'])
 
 .constant('DOMAIN', 'http://ec2-54-152-205-200.compute-1.amazonaws.com/api/v1')
-.constant('VERSION', '1.28')
+.constant('VERSION', '1.29')
 
 .run(function($rootScope, $window, $ionicLoading, $ionicPlatform, $urlRouter, $state, ParticipantService, ActivityService) {
   $ionicPlatform.ready(function() {
