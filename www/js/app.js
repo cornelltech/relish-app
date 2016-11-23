@@ -6,7 +6,7 @@
 angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule'])
 
 .constant('DOMAIN', 'http://ec2-54-152-205-200.compute-1.amazonaws.com/api/v1')
-.constant('VERSION', '1.27')
+.constant('VERSION', '1.28')
 
 .run(function($rootScope, $window, $ionicLoading, $ionicPlatform, $urlRouter, $state, ParticipantService, ActivityService) {
   $ionicPlatform.ready(function() {
@@ -258,6 +258,10 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule'])
         }else{
           // check if all the conditions are met
           var lastStudy = activeStudies.find(function(obj){ return obj.id == lastStudyId; });
+          if( ! lastStudy ){
+            lastStudy = activeStudies[0];
+          }
+
           var lastConditionIndx = lastStudy.conditions.findIndex(function(obj){ return obj.id == lastConditionId });
 
           // get the timestamp of the last time the user pulled this
@@ -971,6 +975,13 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule'])
   $scope.study;
   $scope.condition;
 
+  $scope.bubbles = [];
+  var n = 100;
+  while (n--) {
+    $scope.bubbles.push(
+      {x: Math.floor( Math.random()*100 ), y: Math.floor( Math.random()*100 )}
+    )
+  };
   function syncStudies(){
     console.log('-- CouponController.syncStudies');
 
