@@ -6,7 +6,7 @@
 angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule'])
 
 .constant('DOMAIN', 'http://ec2-54-152-205-200.compute-1.amazonaws.com/api/v1')
-.constant('VERSION', '1.26')
+.constant('VERSION', '1.27')
 
 .run(function($rootScope, $window, $ionicLoading, $ionicPlatform, $urlRouter, $state, ParticipantService, ActivityService) {
   $ionicPlatform.ready(function() {
@@ -365,11 +365,8 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule'])
             
             var now = new Date();
 
-            var timeDiff = Math.abs(now.getTime() - lastEnter.getTime());
-            var diffDays = timeDiff / (1000 * 3600 * 24); 
-
-            if( diffDays >= 1 ){
-              console.log("Generating Push Notification");              
+            if( now.getDate() != lastEnter.getDate() ){
+              console.log("Generating Push Notification");
               
               var n = new Date();
               var _45_seconds_from_now = new Date(n.getSeconds() + 45);
