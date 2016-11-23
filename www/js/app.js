@@ -663,11 +663,14 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule'])
   }
 })
 
-.service('ActivityService', function($q, $http, ParticipantService, DOMAIN){
+.service('ActivityService', function($q, $http, ParticipantService, DOMAIN, VERSION){
   
   function logActivity(text){
     var deferred = $q.defer();
     var token = ParticipantService.getToken();
+
+    var text = VERSION + " - " + text;
+
     $http({
       url: DOMAIN + '/activities',
       method: 'POST',
