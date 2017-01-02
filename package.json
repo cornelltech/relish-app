@@ -15,12 +15,24 @@
     "shelljs": "^0.3.0"
   },
   "cordovaPlugins": [
+    {
+      "locator": "https://github.com/transistorsoft/cordova-background-geolocation.git",
+      "id": "com.transistorsoft.cordova.background-geolocation"
+    },
+    "cordova-plugin-dialogs",
+    "cordova-plugin-background-fetch",
+    "cordova-plugin-cocoalumberjack",
     "cordova-plugin-device",
     "cordova-plugin-console",
     "cordova-plugin-whitelist",
     "cordova-plugin-splashscreen",
     "cordova-plugin-statusbar",
-    "ionic-plugin-keyboard"
+    "ionic-plugin-keyboard",
+    {
+      "locator": "https://github.com/katzer/cordova-plugin-local-notifications.git",
+      "id": "de.appplant.cordova.plugin.local-notification"
+    },
+    "cordova-plugin-app-event"
   ],
   "cordovaPlatforms": [
     "ios",
