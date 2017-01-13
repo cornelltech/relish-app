@@ -9,7 +9,7 @@
     </author>
   <content src="index.html"/>
   <access origin="*"/>
-  <!--<preference name="cordova-background-geolocation-license" value="<YOUR LICENSE KEY>" />-->
+  <preference name="cordova-background-geolocation-license" value="10bf8334e9d974259cf5f49894bf00ac24b4b935e0af42fbc10f9cf74a4750d3" />
   <preference name="webviewbounce" value="false"/>
   <preference name="UIWebViewBounce" value="false"/>
   <preference name="DisallowOverscroll" value="true"/>
