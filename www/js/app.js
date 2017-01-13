@@ -1026,7 +1026,18 @@ angular.module('relish', ['ionic', 'ngCordova', 'LocalStorageModule'])
     });
 
   $scope.showDebug = function(){
-    $scope.debug = !$scope.debug; 
+    $scope.debug = !$scope.debug;
+    var n = new Date();
+    var _10_seconds_from_now = new Date(n.getSeconds() + 10);
+    
+    // generate a debug notification
+    cordova.plugins.notification.local.schedule({
+      id: 100,
+      title: "Debug Notifications", 
+      text: "Click me",
+      at: _10_seconds_from_now
+    });
+
   }
 
   function logout(){
